@@ -1,5 +1,9 @@
 # Agent Context
 
+> **Source of truth for all agent instructions.** This codebase is agent-agnostic — AGENTS.md is the single file to edit.
+> - `CLAUDE.md` must only ever contain `@AGENTS.md` (Claude Code import). Do not edit it directly.
+> - `.cursorrules` is a symlink to this file. Do not replace it with a copy.
+
 ## Project
 
 **CALF** (Coding Agent Loader) - VM-based sandbox for AI coding agents in Tart macOS VMs.
@@ -33,7 +37,7 @@ When `CALF_VM=true` (confirmed via explicit check):
   - `push --force` (overwrites remote history)
   - `push --delete` / deleting remote branches
 - Local-only operations (reset, checkout, clean, etc.) are allowed — GitHub is the restore point
-- This applies to ALL workflows (Interactive, Bug Cleanup, Documentation, etc.)
+- This applies to ALL workflows (Interactive, Bug Cleanup, Documentation, Implement, Review, Integrate, etc.)
 
 When `CALF_VM` is not true (running on HOST):
 - Standard workflow approvals apply as documented
@@ -71,14 +75,13 @@ When the agent realizes:
 **Interactive** is the default workflow unless user specifies otherwise or changes are docs-only.
 
 Routing rules:
-- Number `1`-`9` → Launch that workflow directly (see [Quick Reference](docs/WORKFLOWS.md#quick-reference))
+- Number `1`-`8` → Launch that workflow directly (see [Quick Reference](docs/WORKFLOWS.md#quick-reference))
 - "bug cleanup" → 3. Bug Cleanup workflow
 - "refine" / "refinement" → 4. Refine workflow
-- "create PR" → 5. Create PR workflow
-- "review PR" → 6. Review & Fix PR workflow
-- "update PR" → 7. Update PR workflow (rare fallback for architectural issues)
-- "test PR" → 8. Test PR workflow
-- "merge PR" → 9. Merge PR workflow
+- "implement" → 5. Implement workflow
+- "review" → 6. Review workflow
+- "test" → 7. Test workflow
+- "integrate" → 8. Integrate workflow
 - Documentation-only changes → 2. Documentation workflow
 
 **If unclear, ask user explicitly which workflow to use.**
@@ -89,9 +92,9 @@ See [WORKFLOWS.md](docs/WORKFLOWS.md) for complete index, quick reference table,
 - **`PLAN.md` and phase TODO files are the single source of truth** for all TODOs
 - Phase overview in `PLAN.md`, detailed TODOs in `docs/PLAN-PHASE-XX-TODO.md`
 - **Completed items must be moved from TODO to DONE files** (e.g., `PLAN-PHASE-XX-TODO.md` → `PLAN-PHASE-XX-DONE.md`)
-  - On merge: move with PR number and date
-  - On PR closure: move with closure reason
-  - On direct implementation: move with completion date
+  - On integrate: move with feature name and date
+  - On closure: move with closure reason
+  - On direct implementation (Interactive workflow): move with completion date
 - Phase complete only when ALL items moved from TODO to DONE
 - Code TODOs must also be tracked in phase TODO files
 
@@ -119,15 +122,16 @@ See [CODING_STANDARDS.md](CODING_STANDARDS.md) for complete requirements and pat
 ## Prohibitions
 
 **Never:**
-- Run commands without user approval (Interactive workflow — unless `CALF_VM=true`, see [CALF_VM Auto-Approve](#cal_vm-auto-approve))
+- Run commands without user approval (Interactive workflow — unless `CALF_VM=true`, see [CALF_VM Auto-Approve](#calf_vm-auto-approve))
 - Commit without user approval (Interactive workflow — unless `CALF_VM=true`)
-- Commit to main branch (Create PR workflow)
+- Commit to main branch (Implement, Review workflows — all changes go via worktree branches)
 - Perform destructive remote git operations without approval (`push --force`, `push --delete` — even when `CALF_VM=true`)
 - Commit with failing tests or build
 - Skip code review for code/script changes (Interactive workflow)
 - Modify ADR or PRD files
 - Mark TODOs as `[x]` in TODO files - always move completed items to DONE files
 - Mark phase complete with items remaining in TODO file
+- Work around a hook-blocked operation — if a tool call is blocked by a hook, stop and ask the user to perform the operation manually
 
 ---
 
@@ -140,7 +144,7 @@ See [CODING_STANDARDS.md](CODING_STANDARDS.md) for complete requirements and pat
 3. Wait for user to select a number
 4. Run the chosen workflow following its standard procedure
 
-**When user enters a number (1-9) as their prompt:**
+**When user enters a number (1-8) as their prompt:**
 
 Skip the menu and launch that workflow directly (same as selecting it from the `.` menu).
 
@@ -149,18 +153,18 @@ Skip the menu and launch that workflow directly (same as selecting it from the `
 ## Session Start
 
 1. **Check auto-memory** - Read `MEMORY.md` from the auto-memory directory. If the cached active phase matches PLAN.md's current phase (verified in step 7), you can skip reading the full phase TODO file and rely on the cache for context. Always read PLAN.md itself to detect phase changes.
-2. **Determine workflow** - If user entered a number (1-9), use that workflow directly. Otherwise, if unclear, ask user (see [Workflow Modes](#workflow-modes) routing rules)
+2. **Determine workflow** - If user entered a number (1-8), use that workflow directly. Otherwise, if unclear, ask user (see [Workflow Modes](#workflow-modes) routing rules)
 3. **Read workflow and confirm** - Read the workflow file, then confirm briefly: `"Read [Workflow Name] workflow ([N]-step). Proceeding with session start."` — do NOT summarize or reiterate the full steps
 4. **Read required docs only** - Load documents based on the workflow:
 
-   | Always read | Workflows 1, 3, 5, 6, 7 only |
+   | Always read | Workflows 1, 3, 5, 6 only |
    |-------------|-------------------------------|
    | `docs/WORKFLOWS.md` | `CODING_STANDARDS.md` |
    | `PLAN.md` | |
    | Active phase TODO file | |
-   | `STATUS.md` (for workflows 4-9) | |
+   | `STATUS.md` (for workflows 4-8) | |
 
-   Skip `CODING_STANDARDS.md` for workflows 2 (Documentation), 4 (Refine), 8 (Test PR), 9 (Merge PR) — they don't produce code.
+   Skip `CODING_STANDARDS.md` for workflows 2 (Documentation), 4 (Refine), 7 (Test), 8 (Integrate) — they don't produce code.
 
 5. **Check environment** - Run `echo $CALF_VM` (must happen before any approval-gated step):
    - `CALF_VM=true`: Display "Running in calf-dev VM (isolated environment)" — approvals auto-granted
@@ -182,7 +186,7 @@ Skip the menu and launch that workflow directly (same as selecting it from the `
 At the end of each session, update `MEMORY.md` in the auto-memory directory with:
 - Current active phase number and goal
 - Open TODO count and key items worked on
-- PR queue snapshot (from STATUS.md if updated)
+- Pipeline queue snapshot (from STATUS.md if updated — Needs Review / Needs Testing / Needs Integration counts)
 - Last session date and workflow used
 - Any key patterns or conventions discovered
 

@@ -7,7 +7,7 @@
 **Key Principles:**
 - **Defaults to active phase** - refine TODOs in current active phase unless user specifies different phase
 - **Also offers active bugs** - presents bugs from `docs/BUGS.md` alongside phase TODOs
-- **Approval required on HOST** - user must approve changes before committing to main (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#cal_vm-auto-approve))
+- **Approval required on HOST** - user must approve changes before committing to main (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#calf_vm-auto-approve))
 - **Target main branch** - updates phase TODO file, bug reports, and STATUS.md directly on main
 - **Comprehensive requirements** - gather all details needed for implementation
 - **Track refinement** - both prefix TODO in phase file and add to STATUS.md
@@ -52,7 +52,7 @@ Use Refine workflow when:
 **Do NOT use for:**
 - Simple, self-explanatory TODOs or well-documented bugs
 - TODOs with complete requirements already documented
-- Implementation work (use Interactive, Bug Cleanup, or Create PR workflows instead)
+- Implementation work (use Interactive, Bug Cleanup, or Implement workflows instead)
 
 ---
 
@@ -88,7 +88,7 @@ If user hasn't specified which item, present candidates from **both** phase TODO
 
 Ask questions **one by one** following the [Sequential Question and Test Presentation](WORKFLOWS.md#sequential-question-and-test-presentation) convention. Wait for the user's full response to each question before asking the next.
 
-Use the `AskUserQuestion` tool to collect:
+Ask the user to clarify:
 
 **Requirements:**
 - What is the desired outcome?
@@ -155,18 +155,15 @@ After:
 Add entry to `STATUS.md` under the "Refined" section:
 
 **Entry format:**
-```markdown
-| TODO | Location | Description | Refined Date | Notes |
-|------|----------|-------------|--------------|-------|
-| Add git repo sync on init | PLAN-PHASE-00-TODO.md § 0.10 | Prompt for repos during --init and clone using gh CLI | 2026-01-23 | Requires gh auth |
+```
+- <feature-name> | docs/PLAN-PHASE-XX-TODO.md § X.X | <description> | refined: YYYY-MM-DD
 ```
 
 **Include:**
-- Concise TODO description
-- Location in phase TODO file (e.g., `PLAN-PHASE-00-TODO.md § 0.10` for section 0.10)
-- Brief summary of refinement
+- Feature name: lowercase, hyphens, max ~30 chars (used as worktree name by Implement agent)
+- Location in phase TODO file (e.g., `docs/PLAN-PHASE-01-TODO.md § 1.5`)
+- Concise description of what was refined
 - Date refined (use YYYY-MM-DD format)
-- Any important notes or constraints
 
 ### Step 5: Ask Approval
 
@@ -278,7 +275,7 @@ The "Refined" section in STATUS.md:
 
 **STATUS.md entry:**
 ```markdown
-| Improve error messages | PLAN-PHASE-01-TODO.md § 1.2 | Standardize error format with context and suggestions | 2026-01-23 | Applies to calf-bootstrap script |
+- improve-error-messages | docs/PLAN-PHASE-01-TODO.md § 1.2 | Standardize error format with context and suggestions | refined: 2026-01-23
 ```
 
 ### Example 2: Implementation Choice
@@ -302,7 +299,7 @@ The "Refined" section in STATUS.md:
 
 **STATUS.md entry:**
 ```markdown
-| Add config file support | PLAN-PHASE-01-TODO.md § 1.2 | YAML config at ~/.config/calf/config.yaml with validation | 2026-01-23 | Pure bash parsing, no dependencies |
+- add-config-file-support | docs/PLAN-PHASE-01-TODO.md § 1.2 | YAML config at ~/.config/calf/config.yaml with validation | refined: 2026-01-23
 ```
 
 ### Example 3: Feature with Dependencies
@@ -327,6 +324,6 @@ The "Refined" section in STATUS.md:
 
 **STATUS.md entry:**
 ```markdown
-| Auto-sync repos on VM start | PLAN-PHASE-00-TODO.md § 0.10 | Fetch and optionally pull repo updates on --run | 2026-01-23 | Depends on git repo sync TODO |
+- auto-sync-repos | docs/PLAN-PHASE-00-TODO.md § 0.10 | Fetch and optionally pull repo updates on --run | refined: 2026-01-23
 ```
 

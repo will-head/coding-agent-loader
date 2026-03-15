@@ -2,27 +2,26 @@
 
 > Index of all workflows with quick reference
 
-**Purpose:** This document serves as the index for all CAL workflows. Each workflow has detailed documentation in its own file.
+**Purpose:** This document serves as the index for all CALF workflows. Each workflow has detailed documentation in its own file.
 
 ---
 
 ## Quick Reference
 
-| # | Workflow | Steps | Approvals | Target | Use Case |
-|---|----------|-------|-----------|--------|----------|
-| 1 | [Interactive](WORKFLOW-INTERACTIVE.md) | 10 | Required on HOST | main branch | Default for code changes |
-| 2 | [Documentation](WORKFLOW-DOCUMENTATION.md) | 3 | Required on HOST | main branch | Docs-only changes |
-| 3 | [Bug Cleanup](WORKFLOW-BUG-CLEANUP.md) | 11 | Required on HOST | main branch | Fix tracked bugs from BUGS.md |
-| 4 | [Refine](WORKFLOW-REFINE.md) | 6 | Required on HOST | main branch | Refine PLAN.md TODOs and bugs |
-| 5 | [Create PR](WORKFLOW-CREATE-PR.md) | 8 | Not required | PR branch | PR-based development |
-| 6 | [Review & Fix PR](WORKFLOW-REVIEW-PR.md) | 8 | Not required | PR review + fix | Code review with direct fixes |
-| 7 | [Update PR](WORKFLOW-UPDATE-PR.md) | 8 | Not required | PR branch | Architectural issue fixes (rare) |
-| 8 | [Test PR](WORKFLOW-TEST-PR.md) | 7 | Test confirmation (always) | PR testing | Manual testing gate |
-| 9 | [Merge PR](WORKFLOW-MERGE-PR.md) | 8 | Required on HOST | main branch | Merge tested PRs |
+| # | Workflow | Mode | Steps | Target | Use Case |
+|---|----------|------|-------|--------|----------|
+| 1 | [Interactive](WORKFLOW-INTERACTIVE.md) | User-gated | 10 | main branch | Default for direct code changes |
+| 2 | [Documentation](WORKFLOW-DOCUMENTATION.md) | User-gated | 3 | main branch | Docs-only changes |
+| 3 | [Bug Cleanup](WORKFLOW-BUG-CLEANUP.md) | User-gated | 11 | main branch | Fix tracked bugs from BUGS.md |
+| 4 | [Refine](WORKFLOW-REFINE.md) | User-gated | 6 | main branch | Refine PLAN.md TODOs and bugs |
+| 5 | [Implement](WORKFLOW-IMPLEMENT.md) | Autonomous | 9 | worktree branch | Implement refined TODOs |
+| 6 | [Review](WORKFLOW-REVIEW.md) | Autonomous | 8 | worktree branch | Automated code review + fixes |
+| 7 | [Test](WORKFLOW-TEST.md) | User-driven | 7 | worktree branch | Manual testing gate |
+| 8 | [Integrate](WORKFLOW-INTEGRATE.md) | Autonomous | 9 | main branch | Merge tested work to main |
 
 ### Number Shortcuts
 
-Users can enter a workflow number (1-9) at the start of a session to skip the menu and launch that workflow directly. For example, entering `5` launches the Create PR workflow immediately.
+Users can enter a workflow number (1-8) at the start of a session to skip the menu and launch that workflow directly.
 
 When the user enters `.`, present the numbered workflow list and wait for selection.
 
@@ -33,62 +32,84 @@ When the user enters `.`, present the numbered workflow list and wait for select
 **Interactive** is the default workflow unless:
 - User specifies "bug cleanup" → use Bug Cleanup workflow
 - User specifies "refine" or "refinement" → use Refine workflow
-- User specifies "create PR" → use Create PR workflow
-- User specifies "review PR" → use Review & Fix PR workflow
-- User specifies "update PR" → use Update PR workflow (rare fallback for architectural issues)
-- User specifies "test PR" → use Test PR workflow
-- User specifies "merge PR" → use Merge PR workflow
+- User specifies "implement" → use Implement workflow
+- User specifies "review" → use Review workflow
+- User specifies "test" → use Test workflow
+- User specifies "integrate" → use Integrate workflow
 - Changes are documentation-only → use Documentation workflow
 
 **If unclear, ask user explicitly which workflow to use.**
 
 ---
 
-## PR Workflow Cycle
+## Async Pipeline
 
-Complete flow from creation to merge:
+Workflows 5–8 form an autonomous pipeline. Agents stay busy by moving to the next queued item rather than waiting for the user. The user participates only in the Test workflow (7), which they run when ready.
 
 ```
-Create PR (with self-review)
-    ↓
-Needs Review ←─────────────────┐
-    ↓                           │
-Review & Fix PR                 │
-    ├──────────────┐            │
-    ↓              ↓            │
-Needs Testing  Needs Changes    │
-(common path)  (rare - arch.)   │
-    ↓              ↓            │
-    │         Update PR ────────┘
-    ↓         (rare fallback)
-Test PR
-    ├─────────┐
-    ↓         ↓
-Needs      Needs Changes
-Merging      (loop back)
-    ↓
-Merge PR
-    ↓
-Merged
+Refined
+  ↓ Implement agent (autonomous)
+Needs Review
+  ↓ Review agent (autonomous: code review + automated tests)
+Needs Testing ←──────────────────────────────────┐
+  ↓ USER (workflow 7, when ready)                 │
+Needs Integration    Needs Rework ────────────────┘
+  ↓ Integrate agent (autonomous)     ↓ Implement agent (loop)
+Done
 ```
 
-**[📊 Visual Diagram](PR-WORKFLOW-DIAGRAM.md)** - Complete flow with all details
+**Agent behaviour:** On completing an item, always check the queue for another item before exiting. Multiple items can flow through the pipeline concurrently (each in its own worktree).
 
 ---
 
 ## STATUS.md Sections
 
-Project status is tracked in these sections:
+| Section | Set by | Next Workflow |
+|---------|--------|---------------|
+| **Refined** | Refine (4) | Implement (5) |
+| **Implementing** | Implement (5) — claim | Implement (5) in progress |
+| **Needs Review** | Implement (5) | Review (6) |
+| **Reviewing** | Review (6) — claim | Review (6) in progress |
+| **Needs Testing** | Review (6) | Test (7) |
+| **Needs Integration** | Test (7) | Integrate (8) |
+| **Integrating** | Integrate (8) — claim | Integrate (8) in progress |
+| **Needs Rework** | Review (6) or Test (7) | Implement (5) |
+| **Done** | Integrate (8) | — |
+| **Closed** | Any workflow | — |
 
-| Section | Description | Next Workflow |
-|---------|-------------|---------------|
-| **Refined** | TODOs refined and ready for implementation | Interactive or Create PR |
-| **Needs Review** | PRs awaiting code review | Review & Fix PR |
-| **Needs Changes** | PRs with architectural review feedback (rare) | Update PR |
-| **Needs Testing** | Approved PRs needing manual tests | Test PR |
-| **Needs Merging** | Tested PRs ready to merge | Merge PR |
-| **Merged** | Completed PRs integrated to main | (final) |
-| **Closed** | PRs closed without merging | (final) |
+### STATUS.md Entry Format
+
+```
+## Refined
+- <feature-name> | docs/PLAN-PHASE-XX-TODO.md § X.X | <description> | refined: YYYY-MM-DD
+
+## Implementing
+- <feature-name> | .claude/worktrees/<name> | <description>
+
+## Needs Review
+- <feature-name> | .claude/worktrees/<name> | <description>
+
+## Reviewing
+- <feature-name> | .claude/worktrees/<name> | <description>
+
+## Needs Testing
+- <feature-name> | .claude/worktrees/<name> | <description> | Tests: <brief test scope>
+
+## Needs Integration
+- <feature-name> | .claude/worktrees/<name> | <description>
+
+## Integrating
+- <feature-name> | .claude/worktrees/<name> | <description>
+
+## Needs Rework
+- <feature-name> | .claude/worktrees/<name> | <description> | <Review|Build|Test|User>: <feedback>
+
+## Done
+- <feature-name> | <description> | merged: YYYY-MM-DD
+
+## Closed
+- <feature-name> | <description> | closed: <reason>
+```
 
 ---
 
@@ -97,31 +118,28 @@ Project status is tracked in these sections:
 ### Ask Yourself:
 
 1. **Does a TODO or bug need clarification?**
-   - → Use **Refine** workflow
+   - → Use **Refine** workflow (4)
 
 2. **Are you making docs-only changes?**
-   - → Use **Documentation** workflow
+   - → Use **Documentation** workflow (2)
 
 3. **Is there an active bug in BUGS.md to fix?**
-   - → Use **Bug Cleanup** workflow
+   - → Use **Bug Cleanup** workflow (3)
 
 4. **Is there a refined TODO in STATUS.md ready for implementation?**
-   - → Use **Create PR** workflow
+   - → Use **Implement** workflow (5)
 
-5. **Is there a PR in "Needs Review"?**
-   - → Use **Review & Fix PR** workflow
+5. **Is there an item in "Needs Review"?**
+   - → Use **Review** workflow (6)
 
-6. **Is there a PR in "Needs Changes"?**
-   - → Use **Update PR** workflow (rare — only for architectural issues from Review & Fix PR)
+6. **Is there an item in "Needs Testing"?**
+   - → Use **Test** workflow (7)
 
-7. **Is there a PR in "Needs Testing"?**
-   - → Use **Test PR** workflow
+7. **Is there an item in "Needs Integration"?**
+   - → Use **Integrate** workflow (8)
 
-8. **Is there a PR in "Needs Merging"?**
-   - → Use **Merge PR** workflow
-
-9. **Are you making direct code changes to main?**
-   - → Use **Interactive** workflow
+8. **Are you making direct code changes to main?**
+   - → Use **Interactive** workflow (1)
 
 ---
 
@@ -134,17 +152,19 @@ These conventions apply across all workflows. Individual workflow files referenc
 Every workflow follows this procedure at session start:
 
 1. **Read the workflow file** - Read the appropriate `docs/WORKFLOW-*.md`
-2. **Confirm briefly** - One line: `"Read [Workflow Name] workflow ([N]-step). Proceeding with session start."` — do NOT summarize or reiterate the full workflow steps
+2. **Confirm briefly** - One line: `"Read [Workflow Name] workflow ([N]-step). Proceeding with session start."` — do NOT summarise or reiterate the full steps
 3. **Proceed with standard session start:**
    - Run `echo $CALF_VM` to check environment (must happen before any approval-gated step)
    - Run `git status` to see current branch
    - **CRITICAL:** If not on main branch, switch to main with `git checkout main && git pull` before reading STATUS.md or PLAN.md
    - Run `git fetch` to get latest remote state
+   - Read STATUS.md (for workflows 4–8) to see current pipeline queue
+   - **Check for orphaned worktrees** — list `.claude/worktrees/` if it exists; cross-reference with ALL active STATUS.md sections (Implementing, Reviewing, Needs Review, Needs Testing, Needs Integration, Integrating); any worktree directory with no STATUS.md entry is an orphan — report to user
    - Read PLAN.md for overview and current phase status
-   - Read active phase TODO file (e.g., `docs/PLAN-PHASE-01-TODO.md`) for current tasks
+   - Read active phase TODO file for current tasks
    - Report status and suggest next steps
 
-**Why main branch first?** STATUS.md and PLAN.md are the source of truth and only updated on main (per [Documentation Updates on Main](#documentation-updates-on-main)). Reading them from a feature branch may show stale data.
+**Why main branch first?** STATUS.md and PLAN.md are the source of truth and only updated on main. Reading them from a feature branch may show stale data.
 
 ### CALF_VM Auto-Approve
 
@@ -156,51 +176,97 @@ The agent **MUST** verify VM status at session start by running `echo $CALF_VM`:
 - **Fail-safe:** If the check cannot be performed or returns unexpected output, default to HOST (require approval)
 - **Never assume VM status** — always verify explicitly
 
-#### Approval Behavior
+#### Approval Behaviour
 
 When `CALF_VM=true` (confirmed via explicit check), individual workflow approval steps are skipped — operations proceed automatically without user confirmation.
 
-**Exception:** Destructive remote git operations always require approval, even when `CALF_VM=true`:
-- `push --force` (overwrites remote history)
-- `push --delete` / deleting remote branches
-
-Local-only operations (reset, checkout, clean, etc.) are allowed without approval since GitHub is the restore point.
+**Exceptions — always require approval regardless of CALF_VM:**
+- `git push --force` (overwrites remote history)
+- `git push --delete` / deleting remote branches
 
 **When in doubt, require approval.**
 
-This applies to ALL workflows. See [CLAUDE.md § CALF_VM Auto-Approve](../CLAUDE.md#cal_vm-auto-approve) for the authoritative definition.
+This applies to ALL workflows. See [CLAUDE.md § CALF_VM Auto-Approve](../CLAUDE.md#calf_vm-auto-approve) for the authoritative definition.
+
+### Worktree Conventions
+
+These conventions apply to all workflows that use worktrees (5–8).
+
+#### Paths
+
+- Worktrees are created at `.claude/worktrees/<feature-name>`
+- Feature name: lowercase, hyphens, derived from TODO (e.g., "SSH management" → `ssh-management`)
+- Branch name matches feature name: `implement/<feature-name>`
+- If name already taken, append `-2`, `-3`, etc.
+
+#### Git Operations in a Worktree
+
+When working in a worktree from a separate session (Review, Integrate), use the `-C` flag to run git commands in the worktree directory without changing the session's CWD:
+
+```bash
+git -C .claude/worktrees/<name> add -A
+git -C .claude/worktrees/<name> commit -m "..."
+git -C .claude/worktrees/<name> push
+```
+
+Or use absolute paths in Read/Edit/Grep/Write tools to access worktree files directly.
+
+#### Orphaned Worktrees
+
+A worktree is orphaned if its STATUS.md entry is missing or inconsistent. At session start:
+1. List `.claude/worktrees/` contents
+2. Cross-reference with ALL active STATUS.md sections: Implementing, Reviewing, Needs Review, Needs Testing, Needs Integration, Integrating
+3. Any directory with no matching STATUS.md entry is an orphan — report to user; do NOT silently delete
+
+#### Claim Mechanism
+
+Before entering or working in a worktree, agents must claim the item in STATUS.md to prevent two agents picking up the same work:
+1. Move item from its current section (e.g., "Refined" → "Implementing", "Needs Review" → "Reviewing", "Needs Integration" → "Integrating")
+2. Commit and push this STATUS.md change on main **before** starting work
+3. If push fails (race condition — another agent claimed first), stop and pick the next unclaimed item
+
+#### Worktree Lifecycle
+
+| Stage | Action | By |
+|-------|--------|----|
+| New work | `EnterWorktree implement/<name>` | Implement agent |
+| In progress | `ExitWorktree keep` | Implement agent |
+| Review/Test | File paths into `.claude/worktrees/<name>` | Review, Test agents |
+| Claim for merge | Move to "Integrating" in STATUS.md | Integrate agent |
+| Merge | `git merge implement/<name>` from main | Integrate agent |
+| Cleanup | `git worktree remove .claude/worktrees/<name>` | Integrate agent |
 
 ### Numbered Choice Presentation
 
-When presenting items for user selection (TODOs, PRs, tasks), **always use a numbered list** so users can reply with just a number:
+When presenting items for user selection (TODOs, worktrees, tasks), **always use a numbered list** so users can reply with just a number:
 
 ```
 Available items:
 
-1. Add snapshot validation (PLAN-PHASE-01-TODO.md § 1.3)
-2. Fix SSH timeout handling (PLAN-PHASE-01-TODO.md § 1.5)
-3. Add config file support (PLAN-PHASE-01-TODO.md § 1.7)
+1. ssh-management | SSH management (1.5)
+2. snapshot-create | Snapshot create command (1.4)
+3. cache-parity | Go cache parity cleanup (1.7)
 
 Enter number:
 ```
 
 This applies to:
 - TODO selection (Interactive, Refine workflows)
-- PR queue selection (Create PR, Review & Fix PR, Update PR, Test PR, Merge PR workflows)
+- Queue selection (Implement, Review, Test, Integrate workflows)
 - Next step suggestions at workflow completion
 - Any time user must choose between multiple items
 
 ### Next Workflow Guidance
 
-At the end of workflows 4-9, read STATUS.md and suggest the next workflow based on what's actually queued. Check sections in **priority order** (items further along the pipeline should be completed first):
+At the end of workflows 4–8, read STATUS.md and suggest the next workflow based on what's actually queued. Check sections in **priority order** (items further along the pipeline should be completed first):
 
 | Priority | STATUS.md Section | Suggested Workflow |
 |----------|-------------------|--------------------|
-| 1 (highest) | Needs Merging (has entries) | **9** (Merge PR) |
-| 2 | Needs Testing (has entries) | **8** (Test PR) |
-| 3 | Needs Changes (has entries) | **7** (Update PR) |
-| 4 | Needs Review (has entries) | **6** (Review & Fix PR) |
-| 5 | Refined (has entries) | **5** (Create PR) |
+| 1 (highest) | Needs Integration (has entries) | **8** (Integrate) |
+| 2 | Needs Testing (has entries) | **7** (Test) |
+| 3 | Needs Rework (has entries) | **5** (Implement) |
+| 4 | Needs Review (has entries) | **6** (Review) |
+| 5 | Refined (has entries) | **5** (Implement) |
 | 6 (lowest) | Nothing queued | **4** (Refine) to prepare more TODOs |
 
 **How to apply:**
@@ -208,19 +274,19 @@ At the end of workflows 4-9, read STATUS.md and suggest the next workflow based 
 1. Read STATUS.md after the workflow completes (already on main branch at this point)
 2. Find the highest-priority non-empty section from the table above
 3. Display: `Next: run workflow X (Workflow Name) — N items in queue`
-4. If multiple sections have entries, mention them: `Also: N PRs in Needs Testing, N refined TODOs ready`
+4. If multiple sections have entries, mention them: `Also: N items in Needs Review, N refined TODOs ready`
 
 **Example output:**
 ```
-Next: run workflow 8 (Test PR) — 1 PR in Needs Testing
-Also: 3 refined TODOs ready for Create PR
+Next: run workflow 7 (Test) — 2 items in Needs Testing
+Also: 1 item in Needs Review
 ```
 
 ### Sequential Question and Test Presentation
 
 When gathering information or presenting testing instructions, **present items one by one** rather than as a batch list.
 
-**For multi-part questions (e.g., "1. this 2. that 3. other"):**
+**For multi-part questions:**
 1. Present question #1 only
 2. Wait for user's answer
 3. Ask any follow-up questions needed to fully understand
@@ -235,17 +301,10 @@ When gathering information or presenting testing instructions, **present items o
 5. Repeat until all tests complete
 
 **Never present a batch list like:**
-- ❌ "Answer these questions: 1) X? 2) Y? 3) Z?"
 - ❌ "Run these tests: 1. Test A, 2. Test B, 3. Test C"
 
 **Always present sequentially:**
-- ✅ "Question 1: X?" → wait → follow-ups → satisfied → "Question 2: Y?" → etc.
 - ✅ "Test 1: Do A" → wait for result → handle → "Test 2: Do B" → etc.
-
-This applies to:
-- Requirements gathering questions (Refine, Interactive workflows)
-- User testing instructions (Interactive workflow Step 6, Test PR workflow)
-- Any multi-step user interaction requiring sequential confirmation
 
 ### Commit Message Format
 
@@ -257,7 +316,7 @@ Brief summary (imperative mood)
 
 Detailed description of what changed and why.
 
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -265,27 +324,15 @@ EOF
 ### Documentation Updates on Main
 
 **CRITICAL:** PLAN.md and STATUS.md updates must ALWAYS be done on main branch:
-- Create/update PR on feature branch
-- Switch to main: `git checkout main`
-- Update STATUS.md and PLAN.md
-- Commit and push to main
-- Do NOT include these doc changes in the PR
-
-### PR Comments Format
-
-Always use heredoc format to preserve formatting:
-
-```bash
-gh pr comment <PR#> --body "$(cat <<'EOF'
-Comment text here.
-EOF
-)"
-```
+- All STATUS.md claim/update steps happen on main before or after worktree work
+- Do NOT update STATUS.md from inside a worktree session
+- Switch back to main: `git checkout main` (or use ExitWorktree first)
+- Commit and push STATUS.md/PLAN.md changes on main
 
 ### PLAN.md is Source of Truth
 
 - All TODOs must be tracked in PLAN.md
-- Phase complete only when ALL checkboxes `[x]`
+- Phase complete only when ALL items moved from TODO file to DONE file (TODO file is empty)
 - Update PLAN.md in every workflow
 - Code TODOs must reference PLAN.md
 
@@ -294,21 +341,20 @@ EOF
 **Completed items must be moved from TODO files to DONE files:**
 
 **When to move:**
-- **On merge** (Merge PR workflow) - most common scenario
+- **On integrate** (Integrate workflow) — most common
   - Cut TODO from `PLAN-PHASE-XX-TODO.md`
-  - Paste into `PLAN-PHASE-XX-DONE.md` with PR number and merge date
-  - Example: `- [x] Add validation (PR #42, merged 2026-01-21)`
+  - Paste into `PLAN-PHASE-XX-DONE.md` with feature name and date
+  - Example: `- [x] Add SSH retry logic (ssh-management, merged 2026-03-15)`
 
-- **On PR closure** (any workflow where PR is abandoned/superseded)
+- **On closure** (any workflow where work is abandoned)
   - Move to DONE file with closure reason
-  - Example: `- [x] Add validation (PR #42 closed - filed as known issue)`
-  - Or: `- [x] Add validation (PR #42 closed - superseded by PR #45)`
+  - Example: `- [x] Add SSH retry logic (closed - filed as known issue)`
 
 - **On direct implementation** (Interactive workflow)
   - Move to DONE file after successful commit
-  - Example: `- [x] Add validation (completed 2026-01-21)`
+  - Example: `- [x] Add SSH retry logic (completed 2026-03-15)`
 
-**Never mark as `[x]` in TODO file - always move to DONE file when complete.**
+**Never mark as `[x]` in TODO file — always move to DONE file when complete.**
 
 ### Command Execution Policy
 
@@ -322,7 +368,9 @@ EOF
 
 **Exception:** Read/Grep/Glob tools for code searching do not require approval.
 
-This policy applies to Interactive and Bug Cleanup workflows. PR workflows (5-8) are autonomous and do not require approval.
+This policy applies to Interactive and Bug Cleanup workflows. Autonomous workflows (5, 6, 8) do not require approval.
+
+**Exception:** `git push --delete` always requires approval in all workflows, including autonomous ones — see [CALF_VM Auto-Approve](#calf_vm-auto-approve).
 
 ---
 
@@ -330,21 +378,18 @@ This policy applies to Interactive and Bug Cleanup workflows. PR workflows (5-8)
 
 **Core Documentation:**
 - [CLAUDE.md](../CLAUDE.md) - Agent instructions and core rules
-- [WORKFLOW-REFERENCE.md](WORKFLOW-REFERENCE.md) - Workflow summaries, selection guide, PR cycle diagram
-- [PR-WORKFLOW-DIAGRAM.md](PR-WORKFLOW-DIAGRAM.md) - Visual workflow diagram
 
 **Workflow Detail Files:**
 - [WORKFLOW-INTERACTIVE.md](WORKFLOW-INTERACTIVE.md) - Interactive workflow (10-step)
-- [WORKFLOW-BUG-CLEANUP.md](WORKFLOW-BUG-CLEANUP.md) - Bug Cleanup workflow (10-step)
-- [WORKFLOW-REFINE.md](WORKFLOW-REFINE.md) - Refine workflow (6-step)
-- [WORKFLOW-CREATE-PR.md](WORKFLOW-CREATE-PR.md) - Create PR workflow (8-step)
-- [WORKFLOW-REVIEW-PR.md](WORKFLOW-REVIEW-PR.md) - Review & Fix PR workflow (8-step)
-- [WORKFLOW-UPDATE-PR.md](WORKFLOW-UPDATE-PR.md) - Update PR workflow (8-step, rare fallback)
-- [WORKFLOW-TEST-PR.md](WORKFLOW-TEST-PR.md) - Test PR workflow (7-step)
-- [WORKFLOW-MERGE-PR.md](WORKFLOW-MERGE-PR.md) - Merge PR workflow (8-step)
 - [WORKFLOW-DOCUMENTATION.md](WORKFLOW-DOCUMENTATION.md) - Documentation workflow (3-step)
+- [WORKFLOW-BUG-CLEANUP.md](WORKFLOW-BUG-CLEANUP.md) - Bug Cleanup workflow (11-step)
+- [WORKFLOW-REFINE.md](WORKFLOW-REFINE.md) - Refine workflow (6-step)
+- [WORKFLOW-IMPLEMENT.md](WORKFLOW-IMPLEMENT.md) - Implement workflow (9-step, autonomous)
+- [WORKFLOW-REVIEW.md](WORKFLOW-REVIEW.md) - Review workflow (8-step, autonomous)
+- [WORKFLOW-TEST.md](WORKFLOW-TEST.md) - Test workflow (7-step, user-driven)
+- [WORKFLOW-INTEGRATE.md](WORKFLOW-INTEGRATE.md) - Integrate workflow (9-step, autonomous)
 
 **Project Management:**
 - [PLAN.md](../PLAN.md) - TODOs and implementation tasks (source of truth)
-- [STATUS.md](../STATUS.md) - Project status tracking (refined TODOs and PRs)
+- [STATUS.md](../STATUS.md) - Project status tracking (pipeline queue)
 - [CODING_STANDARDS.md](../CODING_STANDARDS.md) - Code quality standards

@@ -5,7 +5,7 @@
 **Use When:** Making code changes directly to the main branch with interactive approvals
 
 **Key Principles:**
-- **User approval required on HOST** - ask permission before ALL commands (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#cal_vm-auto-approve))
+- **User approval required on HOST** - ask permission before ALL commands (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#calf_vm-auto-approve))
 - **Blocking checkpoints** - each step must complete before proceeding
 - **Code review mandatory** - all code/script changes reviewed before commit
 - **Documentation-only exception** - skip tests/build/review for `.md` files only
@@ -14,7 +14,7 @@
 
 ## Overview
 
-The Interactive workflow is the default workflow for making code changes directly to the main branch. On HOST, it requires explicit user approval before running any commands (git, build, tests, installs), ensuring the user maintains full control over all operations. When `CALF_VM=true`, approvals are auto-granted (see [CALF_VM Auto-Approve](WORKFLOWS.md#cal_vm-auto-approve)).
+The Interactive workflow is the default workflow for making code changes directly to the main branch. On HOST, it requires explicit user approval before running any commands (git, build, tests, installs), ensuring the user maintains full control over all operations. When `CALF_VM=true`, approvals are auto-granted (see [CALF_VM Auto-Approve](WORKFLOWS.md#calf_vm-auto-approve)).
 
 **Target:** main branch (direct commits)
 **Approvals:** Required on HOST for all commands (auto-approved when `CALF_VM=true`)
@@ -143,7 +143,7 @@ Update affected documentation files:
 
 ### Step 10: Complete
 
-Report completion status and suggest next steps from PLAN.md.
+Report completion status and suggest next steps using [Next Workflow Guidance](WORKFLOWS.md#next-workflow-guidance).
 
 ---
 

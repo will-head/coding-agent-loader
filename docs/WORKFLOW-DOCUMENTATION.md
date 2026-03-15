@@ -6,7 +6,7 @@
 
 **Key Principles:**
 - **Always on main branch** - direct commits, no PRs
-- **User approval required on HOST** - must approve before commit (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#cal_vm-auto-approve))
+- **User approval required on HOST** - must approve before commit (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#calf_vm-auto-approve))
 - **Skip tests, build, and code review** - not needed for docs
 - **Simplified Interactive** - like Interactive workflow but only 3 steps
 

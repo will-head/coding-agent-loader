@@ -11,7 +11,7 @@
 - **Prove before testing** - before asking the user to test, demonstrate the fix is sound: tests must pass, provide evidence and reasoning. Never run anything that could modify the host system — ask if unsure
 - **Value user time** - don't ask the user to test prematurely. Get it right first
 - **Bug-driven** - work items come from `docs/BUGS.md`, not phase TODO files
-- **User approval required on HOST** - ask permission before ALL commands (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#cal_vm-auto-approve))
+- **User approval required on HOST** - ask permission before ALL commands (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#calf_vm-auto-approve))
 - **Blocking checkpoints** - each step must complete before proceeding
 - **Code review mandatory** - all code/script changes reviewed before commit
 - **Bug lifecycle** - resolved bugs move from `BUGS.md` to `bugs/README.md`
@@ -20,7 +20,7 @@
 
 ## Overview
 
-The Bug Cleanup workflow is a variant of the Interactive workflow where work items are sourced from `docs/BUGS.md` instead of phase TODO files. It adds a dedicated analysis and proposal step before any implementation begins, ensuring solutions are well-considered and user-approved. User approvals are required at each checkpoint on HOST (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#cal_vm-auto-approve)).
+The Bug Cleanup workflow is a variant of the Interactive workflow where work items are sourced from `docs/BUGS.md` instead of phase TODO files. It adds a dedicated analysis and proposal step before any implementation begins, ensuring solutions are well-considered and user-approved. User approvals are required at each checkpoint on HOST (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#calf_vm-auto-approve)).
 
 **Target:** main branch (direct commits)
 **Approvals:** Required on HOST for all commands (auto-approved when `CALF_VM=true`)
