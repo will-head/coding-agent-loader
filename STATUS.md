@@ -10,7 +10,7 @@
 
 | TODO | Location | Description | Refined Date | Notes |
 |------|----------|-------------|--------------|-------|
-| No-network SMB bypass (Softnet/Tart port blocking) | docs/PLAN-PHASE-01-TODO.md § 5 | Block SMB/NetBIOS traffic to host gateway | 2026-02-08 | WIP on main; see `docs/no-network-security.md` |
+| *No refined TODOs awaiting implementation* | | | | |
 
 ---
 

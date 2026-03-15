@@ -1,9 +1,9 @@
 # No-Network Mode Security Investigation (SMB Bypass)
 
-Updated: 2026-02-08 (session 4 - implementation complete, security issue discovered)
+Updated: 2026-02-10 (resolved via host-side pf anchor)
 Workflow: Interactive (1)
-Branch: main (changes uncommitted at time of discovery)
-Status: CRITICAL - Network isolation bypassed via authenticated SMB
+Branch: main
+Status: RESOLVED — SMB blocked via pf anchor (com.apple/calf.smb-block)
 
 ---
 
@@ -365,24 +365,25 @@ Marker files:
 
 ---
 
-## Current Implementation Plan (post-investigation)
+## Resolution (2026-02-10) — ✅ COMPLETED
 
-Decision: patch Softnet and Tart to add gateway-only port filtering.
+The patched Softnet/Tart approach was abandoned. All compiled-from-source softnet versions failed VM initialization; only Homebrew softnet v0.18.0 works. See `docs/softnet-port-blocking-investigation.md` for full investigation.
 
-Changes:
-- Softnet: new `--block-tcp-ports` / `--block-udp-ports`
-- Tart: new `--net-softnet-block-tcp-ports` / `--net-softnet-block-udp-ports`
-- `calf-bootstrap`: uses patched Tart/Softnet when `--no-network` or `--safe-mode` is enabled
+**Solution: Host-side pf anchor** — Standard Homebrew tart/softnet only. Block SMB/NetBIOS on the HOST using macOS `pf` with a temporary named anchor. No patched binaries. No changes to `/etc/pf.conf`.
 
-PATH override:
-- Patched binaries installed to `~/.calf-tools/bin`
-- `CALF_TOOLS_BIN` controls the override path (default: `~/.calf-tools/bin`)
-- `calf-bootstrap` prepends this path for network-isolated runs
+Architecture:
+- Anchor `com.apple/calf.smb-block` under existing `anchor "com.apple/*"` wildcard
+- Rules: block TCP 445/139 + UDP 137/138 from VM IP to any destination
+- In-memory only — no disk changes; removed when VM stops
+- One-time sudoers drop-in `/etc/sudoers.d/calf-pfctl` for NOPASSWD pfctl on this anchor
+- `--gui` mode: background watcher polls `kill -0 $TART_PID` every 5s; removes rules when VM exits
+- `setup_smb_block_permissions()` runs BEFORE VM starts — eliminates security window
 
-Port blocks (gateway-only):
-- TCP: 445, 139
-- UDP: 137, 138
+Verified smoke tests (all pass):
+- ✅ SMB TCP 445/139 blocked from inside VM
+- ✅ Internet works (github.com HTTP 200)
+- ✅ No host mounts in /Volumes/
+- ✅ Rules removed on VM stop
+- ✅ No spurious password prompts after one-time setup
 
-Expected outcome:
-- SMB/NetBIOS to host gateway is blocked regardless of credentials
-- NAT/internet access remains functional
+See `docs/PLAN-PHASE-01-DONE.md § Critical Issue #5` for full implementation details.
