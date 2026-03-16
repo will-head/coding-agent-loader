@@ -788,6 +788,21 @@ Production change: `RunWithCacheDirs` previously called `exec.Command` directly,
 
 All 162 tests pass. `go vet` clean.
 
+### Item 4: internal/isolation/cache.go — CacheManager Injectable Constructor (2026-03-16)
+
+Added `NewCacheManagerWithDirs(homeDir, cacheBaseDir string) *CacheManager` constructor to `internal/isolation/cache.go`. `NewCacheManager` now delegates to it, eliminating the duplicate struct literal.
+
+Replaced all 34 `&CacheManager{homeDir: ..., cacheBaseDir: ...}` struct literal constructions in `cache_test.go` with `NewCacheManagerWithDirs(...)` calls. No test logic changed — construction mechanism only.
+
+Added 1 new behavioral test:
+
+**`TestNewCacheManagerWithDirs`**
+- `"when dirs provided should initialise with given home and cache base dirs"`
+
+All 168 tests pass. `staticcheck` clean (pre-existing BUG-010 in `config.go` unrelated).
+
+---
+
 ### Item 3: internal/isolation/tart.go — ensureInstalled Homebrew Branch (2026-03-16)
 
 Added 3 injectable fields to `TartClient`:

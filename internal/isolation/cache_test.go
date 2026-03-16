@@ -17,10 +17,7 @@ func TestHomebrewCacheSetup(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when home dir is available should create homebrew cache directory", func(t *testing.T) {
 		err := cm.SetupHomebrewCache()
@@ -71,10 +68,7 @@ func TestGetHomebrewCacheInfo(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when cache does not exist should return zero size", func(t *testing.T) {
 		info, err := cm.GetHomebrewCacheInfo()
@@ -127,10 +121,7 @@ func TestCacheStatus(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when homebrew cache is set up should include homebrew in output", func(t *testing.T) {
 		// Setup cache
@@ -176,12 +167,31 @@ func TestNewCacheManagerInitialisesFields(t *testing.T) {
 	})
 }
 
+func TestNewCacheManagerWithDirs(t *testing.T) {
+	t.Run("when dirs provided should initialise with given home and cache base dirs", func(t *testing.T) {
+		// Arrange
+		homeDir := t.TempDir()
+		cacheBaseDir := filepath.Join(homeDir, "cache")
+
+		// Act
+		cm := NewCacheManagerWithDirs(homeDir, cacheBaseDir)
+
+		// Assert
+		if cm == nil {
+			t.Fatalf("expected non-nil CacheManager")
+		}
+		if cm.homeDir != homeDir {
+			t.Fatalf("expected homeDir %q, got %q", homeDir, cm.homeDir)
+		}
+		if cm.cacheBaseDir != cacheBaseDir {
+			t.Fatalf("expected cacheBaseDir %q, got %q", cacheBaseDir, cm.cacheBaseDir)
+		}
+	})
+}
+
 func TestHomebrewCacheSetupEdgeCases(t *testing.T) {
 	t.Run("when home dir is empty should return nil without error", func(t *testing.T) {
-		cm := &CacheManager{
-			homeDir:      "",
-			cacheBaseDir: "",
-		}
+		cm := NewCacheManagerWithDirs("", "")
 
 		// Should not return error when home directory unavailable (graceful degradation)
 		err := cm.SetupHomebrewCache()
@@ -204,10 +214,7 @@ func TestHomebrewCacheSetupEdgeCases(t *testing.T) {
 		}
 		defer os.Chmod(readonlyDir, 0755)
 
-		cm := &CacheManager{
-			homeDir:      tmpDir,
-			cacheBaseDir: readonlyDir,
-		}
+		cm := NewCacheManagerWithDirs(tmpDir, readonlyDir)
 
 		// Should return error for permission issues (not graceful degradation case)
 		err = cm.SetupHomebrewCache()
@@ -224,10 +231,7 @@ func TestVMHomebrewCacheSetup(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when host cache exists should return setup commands", func(t *testing.T) {
 		// Setup host cache
@@ -262,10 +266,7 @@ func TestVMHomebrewCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when home dir is unavailable should return nil", func(t *testing.T) {
-		cmNoHome := &CacheManager{
-			homeDir:      "",
-			cacheBaseDir: "",
-		}
+		cmNoHome := NewCacheManagerWithDirs("", "")
 
 		commands := cmNoHome.SetupVMHomebrewCache()
 		if commands != nil {
@@ -274,10 +275,7 @@ func TestVMHomebrewCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when host cache does not exist should return nil", func(t *testing.T) {
-		cmNoCache := &CacheManager{
-			homeDir:      tmpDir,
-			cacheBaseDir: filepath.Join(tmpDir, "nonexistent-cache"),
-		}
+		cmNoCache := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "nonexistent-cache"))
 
 		commands := cmNoCache.SetupVMHomebrewCache()
 		if commands != nil {
@@ -304,10 +302,7 @@ func TestSharedCacheMountAndHostPath(t *testing.T) {
 		}
 		defer os.RemoveAll(tmpDir)
 
-		cm := &CacheManager{
-			homeDir:      tmpDir,
-			cacheBaseDir: filepath.Join(tmpDir, "cache"),
-		}
+		cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 		hostPath := cm.GetHomebrewCacheHostPath()
 		if hostPath == "" {
@@ -358,10 +353,7 @@ func TestNpmCacheSetup(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when home dir is available should create npm cache directory", func(t *testing.T) {
 		err := cm.SetupNpmCache()
@@ -392,10 +384,7 @@ func TestNpmCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when home dir is empty should return nil without error", func(t *testing.T) {
-		cmNoHome := &CacheManager{
-			homeDir:      "",
-			cacheBaseDir: "",
-		}
+		cmNoHome := NewCacheManagerWithDirs("", "")
 
 		err := cmNoHome.SetupNpmCache()
 		if err != nil {
@@ -411,10 +400,7 @@ func TestGetNpmCacheInfo(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when cache does not exist should return zero size", func(t *testing.T) {
 		info, err := cm.GetNpmCacheInfo()
@@ -469,10 +455,7 @@ func TestVMNpmCacheSetup(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when host cache exists should return setup commands", func(t *testing.T) {
 		err := cm.SetupNpmCache()
@@ -502,10 +485,7 @@ func TestVMNpmCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when home dir is unavailable should return nil", func(t *testing.T) {
-		cmNoHome := &CacheManager{
-			homeDir:      "",
-			cacheBaseDir: "",
-		}
+		cmNoHome := NewCacheManagerWithDirs("", "")
 
 		commands := cmNoHome.SetupVMNpmCache()
 		if commands != nil {
@@ -514,10 +494,7 @@ func TestVMNpmCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when host cache does not exist should return nil", func(t *testing.T) {
-		cmNoCache := &CacheManager{
-			homeDir:      tmpDir,
-			cacheBaseDir: filepath.Join(tmpDir, "nonexistent-cache"),
-		}
+		cmNoCache := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "nonexistent-cache"))
 
 		commands := cmNoCache.SetupVMNpmCache()
 		if commands != nil {
@@ -533,10 +510,7 @@ func TestGoCacheSetup(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when home dir is available should create go cache directory with subdirs", func(t *testing.T) {
 		err := cm.SetupGoCache()
@@ -577,10 +551,7 @@ func TestGoCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when home dir is empty should return nil without error", func(t *testing.T) {
-		cmNoHome := &CacheManager{
-			homeDir:      "",
-			cacheBaseDir: "",
-		}
+		cmNoHome := NewCacheManagerWithDirs("", "")
 
 		err := cmNoHome.SetupGoCache()
 		if err != nil {
@@ -596,10 +567,7 @@ func TestGetGoCacheInfo(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when cache does not exist should return zero size", func(t *testing.T) {
 		info, err := cm.GetGoCacheInfo()
@@ -654,10 +622,7 @@ func TestVMGoCacheSetup(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when host cache exists should return setup commands", func(t *testing.T) {
 		err := cm.SetupGoCache()
@@ -690,10 +655,7 @@ func TestVMGoCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when home dir is unavailable should return nil", func(t *testing.T) {
-		cmNoHome := &CacheManager{
-			homeDir:      "",
-			cacheBaseDir: "",
-		}
+		cmNoHome := NewCacheManagerWithDirs("", "")
 
 		commands := cmNoHome.SetupVMGoCache()
 		if commands != nil {
@@ -702,10 +664,7 @@ func TestVMGoCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when host cache does not exist should return nil", func(t *testing.T) {
-		cmNoCache := &CacheManager{
-			homeDir:      tmpDir,
-			cacheBaseDir: filepath.Join(tmpDir, "nonexistent-cache"),
-		}
+		cmNoCache := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "nonexistent-cache"))
 
 		commands := cmNoCache.SetupVMGoCache()
 		if commands != nil {
@@ -721,10 +680,7 @@ func TestGitCacheSetup(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when home dir is available should create git cache directory", func(t *testing.T) {
 		err := cm.SetupGitCache()
@@ -755,10 +711,7 @@ func TestGitCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when home dir is empty should return nil without error", func(t *testing.T) {
-		cmNoHome := &CacheManager{
-			homeDir:      "",
-			cacheBaseDir: "",
-		}
+		cmNoHome := NewCacheManagerWithDirs("", "")
 
 		err := cmNoHome.SetupGitCache()
 		if err != nil {
@@ -774,10 +727,7 @@ func TestGetGitCacheInfo(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when cache does not exist should return zero size", func(t *testing.T) {
 		info, err := cm.GetGitCacheInfo()
@@ -835,10 +785,7 @@ func TestVMGitCacheSetup(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when host cache exists should return setup commands", func(t *testing.T) {
 		err := cm.SetupGitCache()
@@ -865,10 +812,7 @@ func TestVMGitCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when home dir is unavailable should return nil", func(t *testing.T) {
-		cmNoHome := &CacheManager{
-			homeDir:      "",
-			cacheBaseDir: "",
-		}
+		cmNoHome := NewCacheManagerWithDirs("", "")
 
 		commands := cmNoHome.SetupVMGitCache()
 		if commands != nil {
@@ -877,10 +821,7 @@ func TestVMGitCacheSetup(t *testing.T) {
 	})
 
 	t.Run("when host cache does not exist should return nil", func(t *testing.T) {
-		cmNoCache := &CacheManager{
-			homeDir:      tmpDir,
-			cacheBaseDir: filepath.Join(tmpDir, "nonexistent-cache"),
-		}
+		cmNoCache := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "nonexistent-cache"))
 
 		commands := cmNoCache.SetupVMGitCache()
 		if commands != nil {
@@ -896,10 +837,7 @@ func TestGetCachedGitRepos(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when no repos are cached should return empty list", func(t *testing.T) {
 		repos, err := cm.GetCachedGitRepos()
@@ -960,10 +898,7 @@ func TestCacheGitRepo(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when repo already cached should return false", func(t *testing.T) {
 		err := cm.SetupGitCache()
@@ -987,10 +922,7 @@ func TestCacheGitRepo(t *testing.T) {
 	})
 
 	t.Run("when home dir is unavailable should return error", func(t *testing.T) {
-		cmNoHome := &CacheManager{
-			homeDir:      "",
-			cacheBaseDir: "",
-		}
+		cmNoHome := NewCacheManagerWithDirs("", "")
 
 		_, err := cmNoHome.CacheGitRepo("https://example.com/repo.git", "test-repo")
 		if err == nil {
@@ -1006,10 +938,7 @@ func TestUpdateGitRepos(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when no repos are cached should return zero updates", func(t *testing.T) {
 		updated, err := cm.UpdateGitRepos()
@@ -1051,10 +980,7 @@ func TestClearCache(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	cm := &CacheManager{
-		homeDir:      tmpDir,
-		cacheBaseDir: filepath.Join(tmpDir, "cache"),
-	}
+	cm := NewCacheManagerWithDirs(tmpDir, filepath.Join(tmpDir, "cache"))
 
 	t.Run("when cache has files should delete files and recreate directory", func(t *testing.T) {
 		err := cm.SetupHomebrewCache()
@@ -1123,10 +1049,7 @@ func TestClearCache(t *testing.T) {
 		}
 		defer os.RemoveAll(freshTmpDir)
 
-		freshCm := &CacheManager{
-			homeDir:      freshTmpDir,
-			cacheBaseDir: filepath.Join(freshTmpDir, "cache"),
-		}
+		freshCm := NewCacheManagerWithDirs(freshTmpDir, filepath.Join(freshTmpDir, "cache"))
 
 		cleared, err := freshCm.Clear("homebrew", false)
 		if err != nil {
@@ -1295,10 +1218,7 @@ func TestClearCache(t *testing.T) {
 		}
 		defer os.RemoveAll(vmTmpDir)
 
-		vmCm := &CacheManager{
-			homeDir:      vmTmpDir,
-			cacheBaseDir: filepath.Join(vmTmpDir, ".calf-cache"),
-		}
+		vmCm := NewCacheManagerWithDirs(vmTmpDir, filepath.Join(vmTmpDir, ".calf-cache"))
 
 		// Create the .calf-cache base directory
 		if err := os.MkdirAll(vmCm.cacheBaseDir, 0755); err != nil {

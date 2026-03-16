@@ -76,9 +76,15 @@ func NewCacheManager() *CacheManager {
 	if err != nil {
 		homeDir = ""
 	}
+	return NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, ".calf-cache"))
+}
+
+// NewCacheManagerWithDirs creates a CacheManager rooted at the given home and
+// cache base directories. Intended for use in tests.
+func NewCacheManagerWithDirs(homeDir, cacheBaseDir string) *CacheManager {
 	return &CacheManager{
 		homeDir:      homeDir,
-		cacheBaseDir: filepath.Join(homeDir, ".calf-cache"),
+		cacheBaseDir: cacheBaseDir,
 	}
 }
 
