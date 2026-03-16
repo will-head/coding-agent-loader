@@ -170,11 +170,7 @@ git branch -d implement/<feature-name>
 - <feature-name> | <description> | merged: YYYY-MM-DD
 ```
 
-**Update PLAN.md and phase TODO files:**
-- Move completed TODO from `PLAN-PHASE-XX-TODO.md` to `PLAN-PHASE-XX-DONE.md`
-- Entry format: `- [x] <TODO text> (<feature-name>, merged YYYY-MM-DD)`
-- Update PLAN.md phase status if all TODOs in the phase are now complete
-- Add any follow-up TODOs discovered during integration to the appropriate phase TODO file
+**Invoke the `update-docs` skill** to move completed TODOs to DONE, add any new TODOs, and update PLAN.md phase status.
 
 **Commit all documentation changes:**
 

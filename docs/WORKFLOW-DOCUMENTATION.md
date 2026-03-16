@@ -1,4 +1,4 @@
-# Documentation Workflow (3-Step)
+# Documentation Workflow (4-Step)
 
 > Simplified Interactive workflow for documentation-only changes on main branch
 
@@ -8,7 +8,7 @@
 - **Always on main branch** - direct commits, no PRs
 - **User approval required on HOST** - must approve before commit (auto-approved when `CALF_VM=true`; see [CALF_VM Auto-Approve](WORKFLOWS.md#calf_vm-auto-approve))
 - **Skip tests, build, and code review** - not needed for docs
-- **Simplified Interactive** - like Interactive workflow but only 3 steps
+- **Simplified Interactive** - like Interactive workflow but only 4 steps
 
 ---
 
@@ -18,16 +18,16 @@ The Documentation workflow is a simplified version of the Interactive workflow f
 
 **Target:** main branch (direct commits)
 **Approvals:** Required on HOST (auto-approved when `CALF_VM=true`)
-**Steps:** 3 (simplified)
+**Steps:** 4 (simplified)
 
 ---
 
 ## Session Start Procedure
 
 Follow [Session Start Procedure](WORKFLOWS.md#session-start-procedure) from Shared Conventions, highlighting:
-- This is the Documentation workflow (simplified 3-step)
+- This is the Documentation workflow (simplified 4-step)
 - Key principles: docs-only, main branch, user approval required on HOST (auto-approved when `CALF_VM=true`), skip tests/build/review
-- 3 steps: Make Changes → Ask Approval → Commit and Push
+- 4 steps: Make Changes → Ask Approval → Update TODOs → Commit and Push
 - Clarify what counts as documentation-only vs. not
 
 ---
@@ -73,7 +73,11 @@ Present changes to user:
 
 **Wait for explicit approval** before committing (auto-approved when `CALF_VM=true`).
 
-### Step 3: Commit and Push
+### Step 3: Update TODOs
+
+**Invoke the `update-docs` skill** to move completed TODOs to DONE and add any new TODOs discovered.
+
+### Step 4: Commit and Push
 
 **Ask user approval** (auto-approved when `CALF_VM=true`), then commit using [Commit Message Format](WORKFLOWS.md#commit-message-format) from Shared Conventions. Push after commit.
 
@@ -121,7 +125,7 @@ If you're unsure whether changes are documentation-only:
 
 ### PLAN.md and Phase TODO Updates
 
-Even for docs-only changes, follow [TODO → DONE Movement](WORKFLOWS.md#todo--done-movement) rules from Shared Conventions. Add new documentation TODOs discovered to appropriate phase TODO file.
+Even for docs-only changes, invoke the `update-docs` skill to move completed TODOs to DONE and add any new TODOs discovered.
 
 ---
 

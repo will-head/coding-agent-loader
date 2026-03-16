@@ -100,7 +100,7 @@ On main, update STATUS.md:
 
 Commit and push on main immediately so the Integrate agent can act on it.
 
-If the user chose option 2 for any steps (non-blocking failures), add each as a TODO to the appropriate phase TODO file and commit that too.
+If the user chose option 2 for any steps (non-blocking failures), invoke the `update-docs` skill to add each as a TODO to the appropriate phase TODO file, then commit that too.
 
 ### Step 6: Test Failed — Return to Needs Rework
 

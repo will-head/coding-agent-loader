@@ -166,22 +166,7 @@ After user testing is complete, present a final code review summarizing:
 
 ### Step 9: Update Documentation
 
-Update affected documentation files as needed, plus bug-specific updates:
-
-**Bug lifecycle updates:**
-1. **Update bug report** (`docs/bugs/BUG-NNN-slug.md`) - change Status to "Resolved", add resolution details and date
-2. **Remove from `docs/BUGS.md`** - delete the row from the active bugs table
-3. **Update `docs/bugs/README.md`** - change status to "Resolved" and add resolved date
-
-**Other documentation:**
-- `README.md` - if user-facing changes
-- `CLAUDE.md` - if workflow or rules changed
-- `docs/bootstrap.md` - if setup/troubleshooting changed
-- Inline comments in changed code files
-
-**Never modify `docs/adr/*` or `docs/prd/*`** - ADRs and PRDs are immutable historical records.
-
-**Always update PLAN.md and phase TODO files** if the bug fix relates to a tracked TODO - follow [TODO → DONE Movement](WORKFLOWS.md#todo--done-movement) rules from Shared Conventions.
+**Invoke the `update-docs` skill.**
 
 ### Step 10: Commit and Push
 

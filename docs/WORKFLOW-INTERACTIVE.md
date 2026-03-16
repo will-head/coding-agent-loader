@@ -109,20 +109,7 @@ Present testing instructions to the user **one by one** (not as a batch list):
 
 ### Step 8: Update Documentation
 
-Update affected documentation files:
-- `README.md` - if user-facing changes
-- `CLAUDE.md` (AGENTS.md) - if workflow or rules changed
-- `docs/SPEC.md` - if technical spec changed
-- `docs/architecture.md` - if architecture changed
-- `docs/cli.md` - if CLI commands changed
-- `docs/bootstrap.md` - if setup changed
-- `docs/plugins.md` - if plugins affected
-- `docs/roadmap.md` - if roadmap changed
-- Inline comments in changed code files
-
-**Never modify `docs/adr/*` or `docs/prd/*`** - ADRs and PRDs are immutable historical records.
-
-**Always update PLAN.md and phase TODO files** - follow [TODO → DONE Movement](WORKFLOWS.md#todo--done-movement) rules from Shared Conventions. Also add new TODOs discovered during implementation and update PLAN.md phase status.
+**Invoke the `update-docs` skill.**
 
 ### Step 9: Commit and Push
 
