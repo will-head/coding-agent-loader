@@ -76,23 +76,13 @@ Build must succeed to continue.
 
 ### Step 4: Code Review
 
-Review code changes for:
-- **Code quality** - Readability, maintainability, modularity
-- **Test coverage** - All scenarios tested (valid inputs, invalid inputs, errors, edge cases)
-- **Security** - Input validation, no injection risks, proper error handling
-- **Performance** - Efficient algorithms, no unnecessary operations
-- **Go conventions** - Idiomatic Go code
-- **Shell script best practices** - Proper quoting, error handling
-- **New TODOs** - Must add to PLAN.md
-
-Document findings with:
-- File and line references
-- Severity ratings (critical, moderate, minor)
-- Specific recommendations
+- **Invoke the `simplify` skill** — reviews changed code for reuse, quality, and efficiency
 
 ### Step 5: Present Review
 
-- Always present review findings to user
+- Present review findings to user
+- Fix all issues found before proceeding
+- Note any new TODOs discovered — must add to PLAN.md
 - **STOP and wait for explicit user approval** (auto-approved when `CALF_VM=true`)
 - User responses like "approved", "looks good", "proceed" = approved
 - Do not proceed without approval on HOST
@@ -112,10 +102,8 @@ Present testing instructions to the user **one by one** (not as a batch list):
 
 ### Step 7: Present Final Code Review
 
-After user testing is complete, present a final code review summarizing:
-- Any issues discovered during user testing and their resolutions
-- Confirmation that all tests still pass after any fixes
-- Final assessment of code quality and readiness for commit
+- **Invoke the `simplify` skill** again as a final check after user testing
+- Confirm all tests still pass after any fixes made during user testing
 
 **STOP and wait for explicit user approval** before proceeding (auto-approved when `CALF_VM=true`).
 
