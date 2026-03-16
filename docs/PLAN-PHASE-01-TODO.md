@@ -14,6 +14,32 @@
 
 ## Critical Issues - HIGHEST PRIORITY
 
+### 0. **BLOCKER:** TDD Remediation — Bring Codebase into coops-tdd Compliance
+
+**No new code may be written until this is complete.**
+
+The codebase was implemented before the `coops-tdd` skill was adopted. Existing code must be brought into full compliance as if it had been written test-first from the beginning.
+
+**Full plan:** [`docs/TDD-REMEDIATION-PLAN.md`](TDD-REMEDIATION-PLAN.md)
+
+**Summary of work (execute in order):**
+- Pre-work: Fix invalid `go.mod` version
+- Item 0: Rename all existing tests to `when [condition] should [outcome]` convention + AAA structure pass
+- Item 1: Add direct tests for `GetDefaultConfigPath` / `GetVMConfigPath`
+- Item 2: Fix `Run`/`RunWithCacheDirs` to route through injectable `runCommand`; delete no-op tests and `cacheDirMount` constant test; add behavioral replacements
+- Item 3: Make `ensureInstalled` stdin injectable; test Homebrew install branch
+- Item 4: Add `NewCacheManagerWithDirs` constructor; replace struct literals in tests
+- Item 5: Fix `TestCacheManager_Clear` sub-test isolation (shared state)
+- Item 6: Extract `getCacheInfo` helper to eliminate 4× duplication
+- Item 7: Fix `UpdateGitRepos` to surface errors to caller instead of always returning `nil`
+- Item 8: Add tests for `cmd/calf/config.go`; convert `os.Exit` to `RunE`
+- Item 9: Add tests for `cmd/calf/cache.go`; make stdin injectable
+- Item 10: Add root command dispatch tests for `cmd/calf/main.go`
+
+**Done when:** `go test ./...` passes, `staticcheck ./...` passes, all tests satisfy Kent Beck's Test Desiderata (isolated, deterministic, fast, behavioral, structure-insensitive, readable).
+
+---
+
 ### 4. **REFINED:** Bootstrap Init Logic - Update vs Full Recreate Behavior
 
 **Problem:** When both calf-dev and calf-init exist, `calf-bootstrap --init` offers to update calf-init from calf-dev. If user declines, script aborts completely (exit 0). User cannot proceed with full fresh init even if desired.
