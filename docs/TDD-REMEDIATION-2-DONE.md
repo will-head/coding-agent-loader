@@ -97,3 +97,54 @@ Replaced all 7 occurrences of `err.Error()[:len(expectedMsg)] != expectedMsg` wi
 - [x] All `err.Error()[:len(x)]` slicing replaced with `strings.HasPrefix`
 - [x] `go test ./...` passes (207 tests)
 - [x] `go build` succeeds
+
+---
+
+## Item 2 — Replace `TestEnsureInstalled` with public Clone interface tests (2026-03-17)
+
+**File:** `internal/isolation/tart_test.go`
+
+Deleted `TestEnsureInstalled` (5 subtests calling unexported `client.ensureInstalled()` and asserting internal `client.tartPath` state). Also deleted the orphaned `// Integration tests` comment block.
+
+Added 5 replacement test functions exercising the same scenarios through the public `Clone` method:
+- `TestCloneWhenTartIsInstalled` — tart found via lookPath; dispatches "clone" command
+- `TestCloneWhenTartIsNotInstalledAndUserDeclines` — user declines install; error contains "cancelled"
+- `TestCloneWhenTartIsNotInstalledAndUserConfirmsAndBrewSucceeds` — brew install succeeds; Clone succeeds
+- `TestCloneWhenTartIsNotInstalledAndBrewFails` — brew install fails; error contains "failed to install"
+- `TestCloneWhenBrewIsNotAvailableAndTartNotFound` — no tart, no brew; returns error
+
+Success-path tests override `runCommand` with a closure that calls `ensureInstalled` then delegates to `mockCommandRunner` — preserving real dispatch behaviour without exec. Failure-path tests rely on default `runTartCommand` returning early when `ensureInstalled` errors.
+
+Code review simplified the tests by extracting the duplicated `runCommand` closure into `makeInstallingRunCommand(client, mock)` helper.
+
+Also resolves BUG-011 (SA4031 nil check on initialised slice in `TestTartClient_RunWithCacheDirs_AcceptsCacheDirs`) — that test was already deleted in TDD-R2 Item 2 (internal/isolation/tart.go).
+
+**TDD Remediation 2 is COMPLETE.** All items done (7: Items 7, 8, 3, 1, 5, 4, 6 + Item 2 today). 203 tests pass, `staticcheck` clean.
+
+Net change: -131 lines test / +79 lines test (5 new functions + helper).
+
+**Completion criteria met:**
+- [x] `TestEnsureInstalled` deleted and replaced with 5 public-interface tests via `Clone`
+- [x] `makeInstallingRunCommand` helper extracted
+- [x] `go test ./...` passes (203 tests)
+- [x] `staticcheck ./...` clean
+
+---
+
+## BUG-011: Nil Check on Initialised Slice (SA4031) — ✅ COMPLETED (2026-03-17)
+
+- [x] BUG-011: SA4031 nil check on initialised slice in `TestTartClient_RunWithCacheDirs_AcceptsCacheDirs` (completed 2026-03-17)
+
+Resolved as part of TDD-R2 Item 2 — the test containing this violation was deleted and replaced with behaviour-based tests. See Item 2 entry above.
+
+---
+
+## BUG-012: CacheManager Injectable Writer — ✅ COMPLETED (2026-03-17)
+
+- [x] BUG-012: CacheManager writes directly to os.Stderr (untestable warnings) (completed 2026-03-17)
+
+Added `writer io.Writer` field to `CacheManager`. `NewCacheManager()` and `NewCacheManagerWithDirs()` both default to `os.Stderr` (no production behaviour change). New `NewCacheManagerWithWriter(homeDir, cacheBaseDir, w)` constructor enables tests to inject `&bytes.Buffer{}`. All five `fmt.Fprintf(os.Stderr, ...)` calls in `SetupHomebrewCache`, `SetupNpmCache`, `SetupGoCache`, `SetupGitCache`, and `UpdateGitRepos` replaced with `fmt.Fprintf(c.writer, ...)`. `NewCacheManagerWithDirs` now delegates to `NewCacheManagerWithWriter` (eliminates struct literal duplication).
+
+Added 6 new sub-tests in `TestCacheManagerWriterInjection` covering all four cache type warnings and the `UpdateGitRepos` per-repo warning.
+
+Net change: +79 lines test / +14 lines production. All 207 tests pass.
