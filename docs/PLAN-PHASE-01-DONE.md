@@ -913,6 +913,39 @@ Net change: +1 new test file (270 lines) / +80 lines production. All 192 tests p
 
 ---
 
+## TDD Remediation 2 — Item 2: Rewrite TestEnsureInstalled via public Clone interface — ✅ COMPLETED (2026-03-17)
+
+- [x] TDD-R2 Item 2: Replace `TestEnsureInstalled` with 5 public-interface tests via `Clone` (completed 2026-03-17)
+
+Deleted `TestEnsureInstalled` (5 subtests calling unexported `client.ensureInstalled()` and asserting internal `client.tartPath` state). Also deleted the orphaned `// Integration tests` comment block.
+
+Added 5 replacement test functions exercising the same scenarios through the public `Clone` method:
+- `TestCloneWhenTartIsInstalled` — tart found via lookPath; dispatches "clone" command
+- `TestCloneWhenTartIsNotInstalledAndUserDeclines` — user declines install; error contains "cancelled"
+- `TestCloneWhenTartIsNotInstalledAndUserConfirmsAndBrewSucceeds` — brew install succeeds; Clone succeeds
+- `TestCloneWhenTartIsNotInstalledAndBrewFails` — brew install fails; error contains "failed to install"
+- `TestCloneWhenBrewIsNotAvailableAndTartNotFound` — no tart, no brew; returns error
+
+Success-path tests override `runCommand` with a closure that calls `ensureInstalled` then delegates to `mockCommandRunner` — preserving real dispatch behaviour without exec. Failure-path tests rely on default `runTartCommand` returning early when `ensureInstalled` errors.
+
+Code review simplified the tests by extracting the duplicated `runCommand` closure into `makeInstallingRunCommand(client, mock)` helper.
+
+Also resolves BUG-011 (SA4031 nil check on initialised slice in `TestTartClient_RunWithCacheDirs_AcceptsCacheDirs`) — that test was already deleted in TDD-R2 Item 2 (internal/isolation/tart.go).
+
+**TDD Remediation 2 is COMPLETE.** All items done (7: Items 7, 8, 3, 1, 5, 4, 6 + Item 2 today). 203 tests pass, `staticcheck` clean.
+
+Net change: -131 lines test / +79 lines test (5 new functions + helper).
+
+---
+
+## BUG-011: Nil Check on Initialised Slice (SA4031) — ✅ COMPLETED (2026-03-17)
+
+- [x] BUG-011: SA4031 nil check on initialised slice in `TestTartClient_RunWithCacheDirs_AcceptsCacheDirs` (completed 2026-03-17)
+
+Resolved as part of TDD Remediation 2 Item 2 — the test containing this violation was deleted and replaced with behaviour-based tests. See TDD-R2 Item 2 entry above.
+
+---
+
 ## BUG-012: CacheManager Injectable Writer — ✅ COMPLETED (2026-03-17)
 
 - [x] BUG-012: CacheManager writes directly to os.Stderr (untestable warnings) (completed 2026-03-17)

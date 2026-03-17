@@ -93,7 +93,9 @@ After all items complete, run `go test ./...` and `staticcheck ./...` to confirm
 
 ## Completion Criteria
 
-- [ ] `TestEnsureInstalled` replaced with 5 public-interface tests via `Clone`
+- [x] `TestEnsureInstalled` replaced with 5 public-interface tests via `Clone` (completed 2026-03-17)
 - [x] All `SetupVM*Cache` shell script text assertions replaced with structural assertions (completed 2026-03-17)
-- [ ] `go test ./...` passes with no failures
-- [ ] `staticcheck ./...` passes with no warnings
+- [x] `go test ./...` passes with no failures (203 tests pass)
+- [x] `staticcheck ./...` passes with no warnings
+
+**TDD Remediation 2 is COMPLETE (2026-03-17).**

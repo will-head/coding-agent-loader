@@ -79,8 +79,6 @@ func TestVMStateString(t *testing.T) {
 	}
 }
 
-
-
 func TestClone(t *testing.T) {
 	t.Run("when clone succeeds should execute tart clone command with correct args", func(t *testing.T) {
 		mock := newMockCommandRunner()
@@ -155,7 +153,6 @@ func TestSet(t *testing.T) {
 		}
 	})
 }
-
 
 func TestStop(t *testing.T) {
 	t.Run("when force is false should execute stop without timeout flag", func(t *testing.T) {
@@ -630,139 +627,142 @@ func TestRunWithCacheDirs(t *testing.T) {
 	})
 }
 
-// Integration tests (require real Tart installation)
-// Build with: go test -tags=integration ./...
-
-func TestEnsureInstalled(t *testing.T) {
-	t.Run("when tart is found on path should set tart path and cache result", func(t *testing.T) {
-		client := NewTartClient()
-
-		// First call should check for tart
-		err := client.ensureInstalled()
-
-		// If tart is installed, should succeed. If not, should error with helpful message.
-		if err != nil {
-			if !strings.Contains(err.Error(), "tart") {
-				t.Errorf("ensureInstalled() error should mention tart, got: %v", err)
-			}
-		} else {
-			// Should have found tart and set the path
-			if client.tartPath == "" {
-				t.Error("ensureInstalled() should set tartPath when tart is found")
-			}
+func TestCloneWhenTartIsInstalled(t *testing.T) {
+	// Arrange
+	mock := newMockCommandRunner()
+	mock.addOutput("clone test-image test-vm", "")
+	client := NewTartClient()
+	client.lookPath = func(file string) (string, error) {
+		if file == "tart" {
+			return "/usr/local/bin/tart", nil
 		}
+		return "", fmt.Errorf("not found")
+	}
+	client.runCommand = makeInstallingRunCommand(client, mock)
 
-		// Second call should use cached path
-		err2 := client.ensureInstalled()
-		if err2 != nil && err == nil {
-			t.Error("ensureInstalled() second call should use cached path")
+	// Act
+	err := client.Clone("test-image", "test-vm")
+
+	// Assert
+	if err != nil {
+		t.Errorf("Clone() unexpected error = %v", err)
+	}
+	if len(mock.commands) == 0 {
+		t.Fatal("Clone() should have dispatched a command")
+	}
+	if !sliceContains(mock.commands[0], "clone") {
+		t.Errorf("Clone() command %v should contain 'clone'", mock.commands[0])
+	}
+}
+
+func TestCloneWhenTartIsNotInstalledAndUserDeclines(t *testing.T) {
+	// Arrange
+	client := NewTartClient()
+	client.lookPath = func(file string) (string, error) {
+		if file == "brew" {
+			return "/usr/local/bin/brew", nil
 		}
-	})
+		return "", fmt.Errorf("not found")
+	}
+	client.stdinReader = strings.NewReader("n\n")
 
-	t.Run("when tart is found on path should set tart path without prompting", func(t *testing.T) {
-		// Arrange
-		client := NewTartClient()
-		client.lookPath = func(file string) (string, error) {
-			if file == "tart" {
+	// Act
+	err := client.Clone("test-image", "test-vm")
+
+	// Assert
+	if err == nil {
+		t.Error("Clone() expected error when user declines, got nil")
+	}
+	if !strings.Contains(err.Error(), "cancelled") {
+		t.Errorf("Clone() error should indicate cancellation, got: %v", err)
+	}
+}
+
+func TestCloneWhenTartIsNotInstalledAndUserConfirmsAndBrewSucceeds(t *testing.T) {
+	// Arrange
+	lookPathCalls := 0
+	mock := newMockCommandRunner()
+	mock.addOutput("clone test-image test-vm", "")
+	client := NewTartClient()
+	client.lookPath = func(file string) (string, error) {
+		if file == "brew" {
+			return "/usr/local/bin/brew", nil
+		}
+		if file == "tart" {
+			lookPathCalls++
+			if lookPathCalls > 1 {
 				return "/usr/local/bin/tart", nil
 			}
-			return "", fmt.Errorf("not found")
 		}
-		client.stdinReader = strings.NewReader("") // no input should be consumed
+		return "", fmt.Errorf("not found")
+	}
+	client.stdinReader = strings.NewReader("y\n")
+	client.runBrewCommand = func(args ...string) (string, error) {
+		return "", nil
+	}
+	client.runCommand = makeInstallingRunCommand(client, mock)
 
-		// Act
-		err := client.ensureInstalled()
+	// Act
+	err := client.Clone("test-image", "test-vm")
 
-		// Assert
-		if err != nil {
-			t.Errorf("ensureInstalled() unexpected error = %v", err)
-		}
-		if client.tartPath != "/usr/local/bin/tart" {
-			t.Errorf("ensureInstalled() tartPath = %v, want /usr/local/bin/tart", client.tartPath)
-		}
-	})
+	// Assert
+	if err != nil {
+		t.Errorf("Clone() unexpected error = %v", err)
+	}
+}
 
-	t.Run("when tart is not found and user declines install should return error", func(t *testing.T) {
-		// Arrange
-		client := NewTartClient()
-		client.lookPath = func(file string) (string, error) {
-			if file == "brew" {
-				return "/usr/local/bin/brew", nil
-			}
-			return "", fmt.Errorf("not found")
+func TestCloneWhenTartIsNotInstalledAndBrewFails(t *testing.T) {
+	// Arrange
+	client := NewTartClient()
+	client.lookPath = func(file string) (string, error) {
+		if file == "brew" {
+			return "/usr/local/bin/brew", nil
 		}
-		client.stdinReader = strings.NewReader("n\n")
+		return "", fmt.Errorf("not found")
+	}
+	client.stdinReader = strings.NewReader("y\n")
+	client.runBrewCommand = func(args ...string) (string, error) {
+		return "", fmt.Errorf("brew install failed")
+	}
 
-		// Act
-		err := client.ensureInstalled()
+	// Act
+	err := client.Clone("test-image", "test-vm")
 
-		// Assert
-		if err == nil {
-			t.Error("ensureInstalled() expected error when user declines, got nil")
-		}
-		if !strings.Contains(err.Error(), "cancelled") {
-			t.Errorf("ensureInstalled() error should indicate cancellation, got: %v", err)
-		}
-	})
+	// Assert
+	if err == nil {
+		t.Error("Clone() expected error when brew fails, got nil")
+	}
+	if !strings.Contains(err.Error(), "failed to install") {
+		t.Errorf("Clone() error should indicate install failure, got: %v", err)
+	}
+}
 
-	t.Run("when tart is not found and user confirms install and brew succeeds should update tart path", func(t *testing.T) {
-		// Arrange
-		lookPathCalls := 0
-		client := NewTartClient()
-		client.lookPath = func(file string) (string, error) {
-			if file == "brew" {
-				return "/usr/local/bin/brew", nil
-			}
-			if file == "tart" {
-				lookPathCalls++
-				if lookPathCalls > 1 {
-					return "/usr/local/bin/tart", nil // found after install
-				}
-			}
-			return "", fmt.Errorf("not found")
-		}
-		client.stdinReader = strings.NewReader("y\n")
-		client.runBrewCommand = func(args ...string) (string, error) {
-			return "", nil // brew install succeeds
-		}
+func TestCloneWhenBrewIsNotAvailableAndTartNotFound(t *testing.T) {
+	// Arrange
+	client := NewTartClient()
+	client.lookPath = func(file string) (string, error) {
+		return "", fmt.Errorf("not found")
+	}
+	client.stdinReader = strings.NewReader("")
 
-		// Act
-		err := client.ensureInstalled()
+	// Act
+	err := client.Clone("test-image", "test-vm")
 
-		// Assert
-		if err != nil {
-			t.Errorf("ensureInstalled() unexpected error = %v", err)
-		}
-		if client.tartPath == "" {
-			t.Error("ensureInstalled() should set tartPath after successful install")
-		}
-	})
+	// Assert
+	if err == nil {
+		t.Error("Clone() expected error when neither tart nor brew is found, got nil")
+	}
+}
 
-	t.Run("when tart is not found and user confirms install and brew fails should return error", func(t *testing.T) {
-		// Arrange
-		client := NewTartClient()
-		client.lookPath = func(file string) (string, error) {
-			if file == "brew" {
-				return "/usr/local/bin/brew", nil
-			}
-			return "", fmt.Errorf("not found")
+// makeInstallingRunCommand returns a runCommand func that calls ensureInstalled
+// before delegating to the mock, enabling tests to exercise the installation path.
+func makeInstallingRunCommand(client *TartClient, mock *mockCommandRunner) func(args ...string) (string, error) {
+	return func(args ...string) (string, error) {
+		if err := client.ensureInstalled(); err != nil {
+			return "", err
 		}
-		client.stdinReader = strings.NewReader("y\n")
-		client.runBrewCommand = func(args ...string) (string, error) {
-			return "", fmt.Errorf("brew install failed")
-		}
-
-		// Act
-		err := client.ensureInstalled()
-
-		// Assert
-		if err == nil {
-			t.Error("ensureInstalled() expected error when brew fails, got nil")
-		}
-		if !strings.Contains(err.Error(), "failed to install") {
-			t.Errorf("ensureInstalled() error should indicate install failure, got: %v", err)
-		}
-	})
+		return mock.runCommand("tart", args...)
+	}
 }
 
 // sliceContains reports whether s is an element of slice.
