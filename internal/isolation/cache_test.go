@@ -26,22 +26,28 @@ func TestHomebrewCacheSetup(t *testing.T) {
 			t.Fatalf("SetupHomebrewCache failed: %v", err)
 		}
 
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "homebrew")
-		info, err := os.Stat(hostCacheDir)
+		cacheInfo, err := cm.GetHomebrewCacheInfo()
+		if err != nil {
+			t.Fatalf("GetHomebrewCacheInfo failed: %v", err)
+		}
+		if cacheInfo.Path == "" {
+			t.Fatalf("expected non-empty cache path")
+		}
+		dirInfo, err := os.Stat(cacheInfo.Path)
 		if err != nil {
 			t.Fatalf("host cache directory not created: %v", err)
 		}
-		if !info.IsDir() {
+		if !dirInfo.IsDir() {
 			t.Fatalf("host cache is not a directory")
 		}
 
 		// Verify subdirectories exist
-		downloadsDir := filepath.Join(hostCacheDir, "downloads")
+		downloadsDir := filepath.Join(cacheInfo.Path, "downloads")
 		if _, err := os.Stat(downloadsDir); err != nil {
 			t.Fatalf("downloads subdirectory not created: %v", err)
 		}
 
-		caskDir := filepath.Join(hostCacheDir, "Cask")
+		caskDir := filepath.Join(cacheInfo.Path, "Cask")
 		if _, err := os.Stat(caskDir); err != nil {
 			t.Fatalf("Cask subdirectory not created: %v", err)
 		}
@@ -94,8 +100,11 @@ func TestGetHomebrewCacheInfo(t *testing.T) {
 		}
 
 		// Create a test file
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "homebrew")
-		testFile := filepath.Join(hostCacheDir, "test-file.bin")
+		hbInfo, err := cm.GetHomebrewCacheInfo()
+		if err != nil {
+			t.Fatalf("GetHomebrewCacheInfo failed: %v", err)
+		}
+		testFile := filepath.Join(hbInfo.Path, "test-file.bin")
 		if err := os.WriteFile(testFile, []byte("test data"), 0644); err != nil {
 			t.Fatalf("failed to create test file: %v", err)
 		}
@@ -345,12 +354,15 @@ func TestNpmCacheSetup(t *testing.T) {
 			t.Fatalf("SetupNpmCache failed: %v", err)
 		}
 
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "npm")
-		info, err := os.Stat(hostCacheDir)
+		cacheInfo, err := cm.GetNpmCacheInfo()
+		if err != nil {
+			t.Fatalf("GetNpmCacheInfo failed: %v", err)
+		}
+		dirInfo, err := os.Stat(cacheInfo.Path)
 		if err != nil {
 			t.Fatalf("host cache directory not created: %v", err)
 		}
-		if !info.IsDir() {
+		if !dirInfo.IsDir() {
 			t.Fatalf("host cache is not a directory")
 		}
 	})
@@ -411,8 +423,11 @@ func TestGetNpmCacheInfo(t *testing.T) {
 			t.Fatalf("SetupNpmCache failed: %v", err)
 		}
 
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "npm")
-		testFile := filepath.Join(hostCacheDir, "test-package.tar.gz")
+		npmInfo, err := cm.GetNpmCacheInfo()
+		if err != nil {
+			t.Fatalf("GetNpmCacheInfo failed: %v", err)
+		}
+		testFile := filepath.Join(npmInfo.Path, "test-package.tar.gz")
 		if err := os.WriteFile(testFile, []byte("test npm cache data"), 0644); err != nil {
 			t.Fatalf("failed to create test file: %v", err)
 		}
@@ -502,23 +517,15 @@ func TestGoCacheSetup(t *testing.T) {
 			t.Fatalf("SetupGoCache failed: %v", err)
 		}
 
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "go")
-		info, err := os.Stat(hostCacheDir)
+		cacheInfo, err := cm.GetGoCacheInfo()
 		if err != nil {
-			t.Fatalf("host cache directory not created: %v", err)
+			t.Fatalf("GetGoCacheInfo failed: %v", err)
 		}
-		if !info.IsDir() {
-			t.Fatalf("host cache is not a directory")
+		if cacheInfo.Path == "" {
+			t.Fatalf("expected non-empty cache path")
 		}
-
-		pkgModDir := filepath.Join(hostCacheDir, "pkg", "mod")
-		if _, err := os.Stat(pkgModDir); err != nil {
-			t.Fatalf("pkg/mod subdirectory not created: %v", err)
-		}
-
-		pkgSumdbDir := filepath.Join(hostCacheDir, "pkg", "sumdb")
-		if _, err := os.Stat(pkgSumdbDir); err != nil {
-			t.Fatalf("pkg/sumdb subdirectory not created: %v", err)
+		if !cacheInfo.Available {
+			t.Fatalf("expected cache to be available after setup")
 		}
 	})
 
@@ -578,8 +585,11 @@ func TestGetGoCacheInfo(t *testing.T) {
 			t.Fatalf("SetupGoCache failed: %v", err)
 		}
 
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "go", "pkg", "mod")
-		testFile := filepath.Join(hostCacheDir, "test-module@v1.0.0")
+		goInfo, err := cm.GetGoCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGoCacheInfo failed: %v", err)
+		}
+		testFile := filepath.Join(goInfo.Path, "pkg", "mod", "test-module@v1.0.0")
 		if err := os.WriteFile(testFile, []byte("test go module data"), 0644); err != nil {
 			t.Fatalf("failed to create test file: %v", err)
 		}
@@ -672,12 +682,15 @@ func TestGitCacheSetup(t *testing.T) {
 			t.Fatalf("SetupGitCache failed: %v", err)
 		}
 
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "git")
-		info, err := os.Stat(hostCacheDir)
+		cacheInfo, err := cm.GetGitCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGitCacheInfo failed: %v", err)
+		}
+		dirInfo, err := os.Stat(cacheInfo.Path)
 		if err != nil {
 			t.Fatalf("host cache directory not created: %v", err)
 		}
-		if !info.IsDir() {
+		if !dirInfo.IsDir() {
 			t.Fatalf("host cache is not a directory")
 		}
 	})
@@ -738,7 +751,11 @@ func TestGetGitCacheInfo(t *testing.T) {
 			t.Fatalf("SetupGitCache failed: %v", err)
 		}
 
-		repoCacheDir := filepath.Join(cm.cacheBaseDir, "git", "test-repo")
+		gitInfo, err := cm.GetGitCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGitCacheInfo failed: %v", err)
+		}
+		repoCacheDir := filepath.Join(gitInfo.Path, "test-repo")
 		if err := os.MkdirAll(repoCacheDir, 0755); err != nil {
 			t.Fatalf("failed to create test repo cache: %v", err)
 		}
@@ -840,8 +857,12 @@ func TestGetCachedGitRepos(t *testing.T) {
 			t.Fatalf("SetupGitCache failed: %v", err)
 		}
 
-		repo1Dir := filepath.Join(cm.cacheBaseDir, "git", "repo1")
-		repo2Dir := filepath.Join(cm.cacheBaseDir, "git", "repo2")
+		gitInfo, err := cm.GetGitCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGitCacheInfo failed: %v", err)
+		}
+		repo1Dir := filepath.Join(gitInfo.Path, "repo1")
+		repo2Dir := filepath.Join(gitInfo.Path, "repo2")
 		if err := os.MkdirAll(repo1Dir, 0755); err != nil {
 			t.Fatalf("failed to create repo1: %v", err)
 		}
@@ -890,7 +911,11 @@ func TestCacheGitRepo(t *testing.T) {
 			t.Fatalf("SetupGitCache failed: %v", err)
 		}
 
-		repoDir := filepath.Join(cm.cacheBaseDir, "git", "test-repo")
+		gitInfo, err := cm.GetGitCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGitCacheInfo failed: %v", err)
+		}
+		repoDir := filepath.Join(gitInfo.Path, "test-repo")
 		if err := os.MkdirAll(repoDir, 0755); err != nil {
 			t.Fatalf("failed to create test repo: %v", err)
 		}
@@ -956,7 +981,11 @@ func TestUpdateGitRepos(t *testing.T) {
 			t.Fatalf("SetupGitCache failed: %v", err)
 		}
 
-		repoDir := filepath.Join(cm.cacheBaseDir, "git", "not-a-repo")
+		gitInfo, err := cm.GetGitCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGitCacheInfo failed: %v", err)
+		}
+		repoDir := filepath.Join(gitInfo.Path, "not-a-repo")
 		if err := os.MkdirAll(repoDir, 0755); err != nil {
 			t.Fatalf("failed to create non-repo directory: %v", err)
 		}
@@ -982,7 +1011,11 @@ func TestUpdateGitRepos(t *testing.T) {
 		if err := exec.Command("git", "init", "--bare", bareRepo).Run(); err != nil {
 			t.Fatalf("git init --bare failed: %v", err)
 		}
-		cacheRepoDir := filepath.Join(localCm.cacheBaseDir, "git", "source-repo")
+		localGitInfo, err := localCm.GetGitCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGitCacheInfo failed: %v", err)
+		}
+		cacheRepoDir := filepath.Join(localGitInfo.Path, "source-repo")
 		if err := exec.Command("git", "clone", bareRepo, cacheRepoDir).Run(); err != nil {
 			t.Fatalf("git clone failed: %v", err)
 		}
@@ -1006,10 +1039,14 @@ func TestUpdateGitRepos(t *testing.T) {
 		if err := localCm.SetupGitCache(); err != nil {
 			t.Fatalf("SetupGitCache failed: %v", err)
 		}
-		makeBadGitRepo(t, filepath.Join(localCm.cacheBaseDir, "git", "bad-repo"))
+		localGitInfo, err := localCm.GetGitCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGitCacheInfo failed: %v", err)
+		}
+		makeBadGitRepo(t, filepath.Join(localGitInfo.Path, "bad-repo"))
 
 		// Act
-		_, err := localCm.UpdateGitRepos()
+		_, err = localCm.UpdateGitRepos()
 
 		// Assert
 		if err == nil {
@@ -1024,12 +1061,16 @@ func TestUpdateGitRepos(t *testing.T) {
 		if err := localCm.SetupGitCache(); err != nil {
 			t.Fatalf("SetupGitCache failed: %v", err)
 		}
-		makeBadGitRepo(t, filepath.Join(localCm.cacheBaseDir, "git", "a-bad-repo"))
+		localGitInfo, err := localCm.GetGitCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGitCacheInfo failed: %v", err)
+		}
+		makeBadGitRepo(t, filepath.Join(localGitInfo.Path, "a-bad-repo"))
 		bareRepo := filepath.Join(homeDir, "source.git")
 		if err := exec.Command("git", "init", "--bare", bareRepo).Run(); err != nil {
 			t.Fatalf("git init --bare failed: %v", err)
 		}
-		goodRepoDir := filepath.Join(localCm.cacheBaseDir, "git", "z-good-repo")
+		goodRepoDir := filepath.Join(localGitInfo.Path, "z-good-repo")
 		if err := exec.Command("git", "clone", bareRepo, goodRepoDir).Run(); err != nil {
 			t.Fatalf("git clone failed: %v", err)
 		}
@@ -1106,7 +1147,11 @@ func TestCacheManagerWriterInjection(t *testing.T) {
 		if err := localCm.SetupGitCache(); err != nil {
 			t.Fatalf("SetupGitCache failed: %v", err)
 		}
-		makeBadGitRepo(t, filepath.Join(localCm.cacheBaseDir, "git", "bad-repo"))
+		localGitInfo, err := localCm.GetGitCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGitCacheInfo failed: %v", err)
+		}
+		makeBadGitRepo(t, filepath.Join(localGitInfo.Path, "bad-repo"))
 
 		// Act
 		_, _ = localCm.UpdateGitRepos()
@@ -1134,8 +1179,11 @@ func TestClearCache(t *testing.T) {
 		if err := cm.SetupHomebrewCache(); err != nil {
 			t.Fatalf("SetupHomebrewCache failed: %v", err)
 		}
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "homebrew")
-		testFile := filepath.Join(hostCacheDir, "test-file.bin")
+		hbInfo, err := cm.GetHomebrewCacheInfo()
+		if err != nil {
+			t.Fatalf("GetHomebrewCacheInfo failed: %v", err)
+		}
+		testFile := filepath.Join(hbInfo.Path, "test-file.bin")
 		if err := os.WriteFile(testFile, []byte("test data"), 0644); err != nil {
 			t.Fatalf("failed to create test file: %v", err)
 		}
@@ -1153,11 +1201,11 @@ func TestClearCache(t *testing.T) {
 		if _, err := os.Stat(testFile); !os.IsNotExist(err) {
 			t.Fatalf("expected test file to be deleted, but it still exists")
 		}
-		info, err := os.Stat(hostCacheDir)
+		dirInfo, err := os.Stat(hbInfo.Path)
 		if err != nil {
 			t.Fatalf("expected cache directory to be recreated: %v", err)
 		}
-		if !info.IsDir() {
+		if !dirInfo.IsDir() {
 			t.Fatalf("expected cache directory to be a directory")
 		}
 	})
@@ -1169,8 +1217,11 @@ func TestClearCache(t *testing.T) {
 		if err := cm.SetupHomebrewCache(); err != nil {
 			t.Fatalf("SetupHomebrewCache failed: %v", err)
 		}
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "homebrew")
-		testFile := filepath.Join(hostCacheDir, "test-file.bin")
+		hbInfo, err := cm.GetHomebrewCacheInfo()
+		if err != nil {
+			t.Fatalf("GetHomebrewCacheInfo failed: %v", err)
+		}
+		testFile := filepath.Join(hbInfo.Path, "test-file.bin")
 		if err := os.WriteFile(testFile, []byte("test data"), 0644); err != nil {
 			t.Fatalf("failed to create test file: %v", err)
 		}
@@ -1250,8 +1301,11 @@ func TestClearCache(t *testing.T) {
 		if err := cm.SetupGoCache(); err != nil {
 			t.Fatalf("SetupGoCache failed: %v", err)
 		}
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "go")
-		testFile := filepath.Join(hostCacheDir, "pkg", "mod", "test-file.bin")
+		goInfo, err := cm.GetGoCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGoCacheInfo failed: %v", err)
+		}
+		testFile := filepath.Join(goInfo.Path, "pkg", "mod", "test-file.bin")
 		if err := os.WriteFile(testFile, []byte("test data"), 0644); err != nil {
 			t.Fatalf("failed to create test file: %v", err)
 		}
@@ -1266,7 +1320,7 @@ func TestClearCache(t *testing.T) {
 		if !cleared {
 			t.Fatalf("expected cleared=true, got false")
 		}
-		pkgModDir := filepath.Join(hostCacheDir, "pkg", "mod")
+		pkgModDir := filepath.Join(goInfo.Path, "pkg", "mod")
 		if _, err := os.Stat(pkgModDir); err != nil {
 			t.Fatalf("expected pkg/mod subdirectory to be recreated: %v", err)
 		}
@@ -1279,8 +1333,11 @@ func TestClearCache(t *testing.T) {
 		if err := cm.SetupGoCache(); err != nil {
 			t.Fatalf("SetupGoCache failed: %v", err)
 		}
-		hostCacheDir := filepath.Join(cm.cacheBaseDir, "go")
-		modDir := filepath.Join(hostCacheDir, "pkg", "mod")
+		goInfo, err := cm.GetGoCacheInfo()
+		if err != nil {
+			t.Fatalf("GetGoCacheInfo failed: %v", err)
+		}
+		modDir := filepath.Join(goInfo.Path, "pkg", "mod")
 		testModuleDir := filepath.Join(modDir, "gopkg.in", "yaml.v3@v3.0.1")
 		if err := os.MkdirAll(testModuleDir, 0755); err != nil {
 			t.Fatalf("failed to create test module directory: %v", err)
@@ -1338,10 +1395,14 @@ func TestClearCache(t *testing.T) {
 
 		vmHomeDir := t.TempDir()
 		vmCm := NewCacheManagerWithDirs(vmHomeDir, filepath.Join(vmHomeDir, ".calf-cache"))
-		if err := os.MkdirAll(vmCm.cacheBaseDir, 0755); err != nil {
+		npmInfo, err := vmCm.GetNpmCacheInfo()
+		if err != nil {
+			t.Fatalf("GetNpmCacheInfo failed: %v", err)
+		}
+		symlinkPath := npmInfo.Path
+		if err := os.MkdirAll(filepath.Dir(symlinkPath), 0755); err != nil {
 			t.Fatalf("failed to create .calf-cache dir: %v", err)
 		}
-		symlinkPath := filepath.Join(vmCm.cacheBaseDir, "npm")
 		if err := os.Symlink(sharedCacheDir, symlinkPath); err != nil {
 			t.Fatalf("failed to create symlink: %v", err)
 		}

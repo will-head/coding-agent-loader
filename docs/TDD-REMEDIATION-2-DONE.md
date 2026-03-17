@@ -41,6 +41,26 @@ Replaced `t.Cleanup(func() { vmName = "" })` with `t.Cleanup(func() { _ = config
 
 ---
 
+## Item 5 — Remove `cm.cacheBaseDir` accesses from cache_test.go (2026-03-17)
+
+**File:** `internal/isolation/cache_test.go`
+
+Replaced all `cm.cacheBaseDir` field accesses throughout `cache_test.go` with calls to the public `GetXxxCacheInfo()` methods, using `info.Path` for directory paths. Three patterns applied:
+- **Pattern A** (verify dir created): `os.Stat(GetXxxCacheInfo().Path)`
+- **Pattern B** (create fixture files): `filepath.Join(GetXxxCacheInfo().Path, "subdir")`
+- **Pattern C** (Go cache subdirs): replaced `pkg/mod` + `pkg/sumdb` subdir assertions with `GetGoCacheInfo().Available`
+
+Affected: `TestHomebrewCacheSetup`, `TestGetHomebrewCacheInfo`, `TestNpmCacheSetup`, `TestGetNpmCacheInfo`, `TestGoCacheSetup`, `TestGetGoCacheInfo`, `TestGitCacheSetup`, `TestGetGitCacheInfo`, `TestGetCachedGitRepos`, `TestCacheGitRepo`, `TestUpdateGitRepos`, `TestClearCache`, `TestCacheManagerWriterInjection`.
+
+`TestNewCacheManagerWithDirs` (lines 179–180) retained for Item 4 which will rewrite that function entirely.
+
+**Completion criteria met:**
+- [x] All `cm.cacheBaseDir` accesses removed except `TestNewCacheManagerWithDirs` (Item 4)
+- [x] `go test ./...` passes (204 tests)
+- [x] `staticcheck ./...` clean
+
+---
+
 ## Item 8 — Fix fragile string slicing in config_test.go (2026-03-17)
 
 **File:** `internal/config/config_test.go`
