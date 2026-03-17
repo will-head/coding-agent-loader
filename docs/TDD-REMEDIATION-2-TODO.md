@@ -19,7 +19,7 @@
 | 5 | `internal/isolation/cache_test.go` | High | Many tests access `cm.cacheBaseDir` (unexported) to build fixture paths |
 | 6 | `internal/isolation/cache_test.go` | Medium | `SetupVM*Cache` tests assert on exact shell script text |
 | 7 | `cmd/calf/config_test.go` | Low | `t.Cleanup` directly resets package-level `vmName` variable by name |
-| 8 | `internal/config/config_test.go` | Low | Fragile `err.Error()[:len(expectedMsg)]` string slicing |
+| 8 | `internal/config/config_test.go` | Low | ~~Fragile `err.Error()[:len(expectedMsg)]` string slicing~~ ✅ Done |
 
 ---
 
@@ -256,38 +256,11 @@ Investigate whether `vmName` is reset naturally when `rootCmd.SetArgs(nil)` is c
 
 ---
 
-## Item 8 — Fix fragile string slicing in config_test.go
-
-**File:** `internal/config/config_test.go` (lines 279, 350, 374, 420, 449, 475, 561, 586)
-
-**Problem:**
-```go
-if err.Error()[:len(expectedMsg)] != expectedMsg {
-```
-This will panic if `err.Error()` is shorter than `expectedMsg`. It also reads as awkward.
-
-**Action:** Replace all occurrences with `strings.HasPrefix`:
-```go
-// Before:
-if err.Error()[:len(expectedMsg)] != expectedMsg {
-    t.Errorf(...)
-}
-
-// After:
-if !strings.HasPrefix(err.Error(), expectedMsg) {
-    t.Errorf(...)
-}
-```
-
-Ensure `"strings"` is already imported (it is).
-
----
-
 ## Execution Order
 
 Work through items in this order to keep the test suite green throughout:
 
-1. **Item 8** — Mechanical find-and-replace, lowest risk. Run `go test ./...` after.
+1. ~~**Item 8** — Mechanical find-and-replace, lowest risk.~~ ✅ Done
 2. **Item 7** — Investigate cobra flag reset, make minimal change. Run `go test ./...` after.
 3. **Item 3** — Delete one test function. Run `go test ./...` after.
 4. **Item 1** — Delete one test function. Run `go test ./...` after.
@@ -309,6 +282,6 @@ After all items complete, run `go test ./...` and `staticcheck ./...` to confirm
 - [ ] All `cm.cacheBaseDir` accesses removed from cache_test.go
 - [ ] All `SetupVM*Cache` shell script text assertions replaced with structural assertions
 - [ ] `vmName = ""` cleanup investigated and resolved
-- [ ] All `err.Error()[:len(x)]` slicing replaced with `strings.HasPrefix`
+- [x] All `err.Error()[:len(x)]` slicing replaced with `strings.HasPrefix` — see DONE file
 - [ ] `go test ./...` passes with no failures
 - [ ] `staticcheck ./...` passes with no warnings

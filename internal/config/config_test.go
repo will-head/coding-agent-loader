@@ -276,7 +276,7 @@ isolation:
 			t.Error("Expected validation error for zero values in config, got nil")
 		}
 		expectedMsg := "invalid CPU '0'"
-		if err.Error()[:len(expectedMsg)] != expectedMsg {
+		if !strings.HasPrefix(err.Error(), expectedMsg) {
 			t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
 		}
 	})
@@ -301,7 +301,7 @@ isolation:
 			t.Error("Expected validation error for empty base image in config, got nil")
 		}
 		expectedMsg := "invalid base_image ''"
-		if err.Error()[:len(expectedMsg)] != expectedMsg {
+		if !strings.HasPrefix(err.Error(), expectedMsg) {
 			t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
 		}
 	})
@@ -348,7 +348,7 @@ func TestValidateConfig(t *testing.T) {
 			t.Error("Expected validation error for invalid CPU, got nil")
 		}
 		expectedMsg := "invalid CPU '0'"
-		if err.Error()[:len(expectedMsg)] != expectedMsg {
+		if !strings.HasPrefix(err.Error(), expectedMsg) {
 			t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
 		}
 	})
@@ -371,7 +371,7 @@ func TestValidateConfig(t *testing.T) {
 			t.Error("Expected validation error for invalid memory, got nil")
 		}
 		expectedMsg := "invalid memory '100'"
-		if err.Error()[:len(expectedMsg)] != expectedMsg {
+		if !strings.HasPrefix(err.Error(), expectedMsg) {
 			t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
 		}
 	})
@@ -418,7 +418,7 @@ func TestValidateConfig(t *testing.T) {
 			t.Error("Expected validation error for invalid disk size, got nil")
 		}
 		expectedMsg := "invalid disk_size '0'"
-		if err.Error()[:len(expectedMsg)] != expectedMsg {
+		if !strings.HasPrefix(err.Error(), expectedMsg) {
 			t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
 		}
 	})
@@ -446,7 +446,7 @@ func TestValidateConfig(t *testing.T) {
 			t.Error("Expected validation error for invalid proxy mode, got nil")
 		}
 		expectedMsg := "invalid proxy mode 'invalid'"
-		if err.Error()[:len(expectedMsg)] != expectedMsg {
+		if !strings.HasPrefix(err.Error(), expectedMsg) {
 			t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
 		}
 	})
@@ -471,7 +471,7 @@ func TestValidateConfig(t *testing.T) {
 			t.Error("Expected validation error for empty base image, got nil")
 		}
 		expectedMsg := "invalid base_image ''"
-		if err.Error()[:len(expectedMsg)] != expectedMsg {
+		if !strings.HasPrefix(err.Error(), expectedMsg) {
 			t.Errorf("Expected error message to start with '%s', got '%s'", expectedMsg, err.Error())
 		}
 	})
