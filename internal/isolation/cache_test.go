@@ -4,6 +4,7 @@ package isolation
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -931,6 +932,21 @@ func TestCacheGitRepo(t *testing.T) {
 	})
 }
 
+// makeBadGitRepo creates a git repo at dir with a remote pointing to a non-existent path,
+// causing git fetch to fail. dir must already exist or will be created.
+func makeBadGitRepo(t *testing.T, dir string) {
+	t.Helper()
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatalf("failed to create dir: %v", err)
+	}
+	if err := exec.Command("git", "init", dir).Run(); err != nil {
+		t.Fatalf("git init failed: %v", err)
+	}
+	if err := exec.Command("git", "-C", dir, "remote", "add", "origin", "/nonexistent/path").Run(); err != nil {
+		t.Fatalf("git remote add failed: %v", err)
+	}
+}
+
 func TestUpdateGitRepos(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "calf-cache-test-*")
 	if err != nil {
@@ -969,6 +985,81 @@ func TestUpdateGitRepos(t *testing.T) {
 
 		if updated != 0 {
 			t.Fatalf("expected 0 updates for non-git directory, got %d", updated)
+		}
+	})
+
+	t.Run("when all repos update successfully should return updated count and nil error", func(t *testing.T) {
+		// Arrange — clone a local bare repo into the git cache
+		homeDir := t.TempDir()
+		localCm := NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, "cache"))
+		if err := localCm.SetupGitCache(); err != nil {
+			t.Fatalf("SetupGitCache failed: %v", err)
+		}
+		bareRepo := filepath.Join(homeDir, "source.git")
+		if err := exec.Command("git", "init", "--bare", bareRepo).Run(); err != nil {
+			t.Fatalf("git init --bare failed: %v", err)
+		}
+		cacheRepoDir := filepath.Join(localCm.cacheBaseDir, "git", "source-repo")
+		if err := exec.Command("git", "clone", bareRepo, cacheRepoDir).Run(); err != nil {
+			t.Fatalf("git clone failed: %v", err)
+		}
+
+		// Act
+		updated, err := localCm.UpdateGitRepos()
+
+		// Assert
+		if err != nil {
+			t.Fatalf("expected nil error, got: %v", err)
+		}
+		if updated != 1 {
+			t.Fatalf("expected 1 updated repo, got %d", updated)
+		}
+	})
+
+	t.Run("when a repo fetch fails should return error", func(t *testing.T) {
+		// Arrange — git repo with a non-existent remote
+		homeDir := t.TempDir()
+		localCm := NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, "cache"))
+		if err := localCm.SetupGitCache(); err != nil {
+			t.Fatalf("SetupGitCache failed: %v", err)
+		}
+		makeBadGitRepo(t, filepath.Join(localCm.cacheBaseDir, "git", "bad-repo"))
+
+		// Act
+		_, err := localCm.UpdateGitRepos()
+
+		// Assert
+		if err == nil {
+			t.Fatal("expected error when repo fetch fails, got nil")
+		}
+	})
+
+	t.Run("when one repo fails should attempt remaining repos and return partial count with error", func(t *testing.T) {
+		// Arrange — bad repo (alphabetically first) + good repo (alphabetically last)
+		homeDir := t.TempDir()
+		localCm := NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, "cache"))
+		if err := localCm.SetupGitCache(); err != nil {
+			t.Fatalf("SetupGitCache failed: %v", err)
+		}
+		makeBadGitRepo(t, filepath.Join(localCm.cacheBaseDir, "git", "a-bad-repo"))
+		bareRepo := filepath.Join(homeDir, "source.git")
+		if err := exec.Command("git", "init", "--bare", bareRepo).Run(); err != nil {
+			t.Fatalf("git init --bare failed: %v", err)
+		}
+		goodRepoDir := filepath.Join(localCm.cacheBaseDir, "git", "z-good-repo")
+		if err := exec.Command("git", "clone", bareRepo, goodRepoDir).Run(); err != nil {
+			t.Fatalf("git clone failed: %v", err)
+		}
+
+		// Act
+		updated, err := localCm.UpdateGitRepos()
+
+		// Assert — good repo was still reached and counted despite earlier failure
+		if updated != 1 {
+			t.Fatalf("expected 1 updated repo (bad one skipped, good one reached), got %d", updated)
+		}
+		if err == nil {
+			t.Fatal("expected error reflecting failed repo, got nil")
 		}
 	})
 }

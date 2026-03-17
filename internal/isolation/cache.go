@@ -478,16 +478,24 @@ func (c *CacheManager) UpdateGitRepos() (int, error) {
 	}
 
 	updated := 0
+	failed := 0
 	for _, repo := range repos {
 		repoPath := filepath.Join(c.getGitCachePath(), repo)
-		cmd := exec.Command("git", "-C", repoPath, "fetch", "--all")
-		if err := cmd.Run(); err != nil {
+		if err := exec.Command("git", "-C", repoPath, "rev-parse", "--git-dir").Run(); err != nil {
+			// Not a git repository — skip silently
+			continue
+		}
+		if err := exec.Command("git", "-C", repoPath, "fetch", "--all").Run(); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to update git cache for %s: %v\n", repo, err)
+			failed++
 			continue
 		}
 		updated++
 	}
 
+	if failed > 0 {
+		return updated, fmt.Errorf("failed to update %d of %d repos", failed, updated+failed)
+	}
 	return updated, nil
 }
 

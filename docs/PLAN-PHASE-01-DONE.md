@@ -844,3 +844,13 @@ Extracted private `getCacheInfo(cachePath string) (*CacheInfo, error)` helper en
 
 Net change: -113 lines / +12 lines. All 168 tests pass.
 
+### Item 7: internal/isolation/cache.go — UpdateGitRepos Error Contract (2026-03-17)
+
+- [x] Fix `UpdateGitRepos` to surface errors to caller instead of always returning `nil` (completed 2026-03-17)
+
+Added `rev-parse --git-dir` pre-check to skip non-git directories silently (preserving existing behaviour). Added `failed` counter; when any valid git repo fails to fetch, returns `fmt.Errorf("failed to update %d of %d repos", failed, updated+failed)` while still processing remaining repos and returning the partial success count.
+
+Added 4 sub-tests to `TestUpdateGitRepos` (merged to 3 after code review): success path, single-failure error return, and combined partial-count + continues-past-failure. Extracted `makeBadGitRepo` test helper to eliminate duplicate arrange blocks.
+
+Net change: +10 lines production / +91 lines test. All 171 tests pass.
+
