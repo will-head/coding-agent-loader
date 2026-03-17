@@ -27,7 +27,7 @@ func setupConfigShow(t *testing.T, extraArgs ...string) (home string, out, errOu
 	t.Helper()
 	home = t.TempDir()
 	t.Setenv("HOME", home)
-	t.Cleanup(func() { vmName = "" })
+	t.Cleanup(func() { _ = configShowCmd.Flags().Set("vm", "") })
 	out = &bytes.Buffer{}
 	errOut = &bytes.Buffer{}
 	rootCmd.SetOut(out)

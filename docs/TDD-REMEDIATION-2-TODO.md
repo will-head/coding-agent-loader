@@ -240,22 +240,6 @@ The nil/non-nil and nil/empty-list tests ("when home dir is unavailable should r
 
 ---
 
-## Item 7 — Fix `vmName` cleanup in config_test.go
-
-**File:** `cmd/calf/config_test.go` (line 30)
-
-**Problem:**
-```go
-t.Cleanup(func() { vmName = "" })
-```
-This couples the test to the package-level variable name `vmName`. If the variable is renamed, the cleanup silently does nothing and tests may bleed state.
-
-**Action:** The real fix is that `setupConfigShow` should not be mutating a package-level variable in the first place. The `vmName` variable is a cobra flag binding — each call to `setupConfigShow` re-runs `rootCmd.SetArgs(...)` which re-parses flags, so the cleanup is only needed if the flag binding stores state outside the parse cycle.
-
-Investigate whether `vmName` is reset naturally when `rootCmd.SetArgs(nil)` is called (already cleaned up on line 40). If the flag binding resets automatically on re-parse, delete the `vmName` cleanup line entirely. If it does not reset, add a comment explaining why it is needed and use the cobra API to reset flag state rather than directly assigning to `vmName`.
-
----
-
 ## Execution Order
 
 Work through items in this order to keep the test suite green throughout:
@@ -281,7 +265,6 @@ After all items complete, run `go test ./...` and `staticcheck ./...` to confirm
 - [ ] `TestNewCacheManagerWithDirs` rewritten as behaviour test using `GetHomebrewCacheInfo`
 - [ ] All `cm.cacheBaseDir` accesses removed from cache_test.go
 - [ ] All `SetupVM*Cache` shell script text assertions replaced with structural assertions
-- [ ] `vmName = ""` cleanup investigated and resolved
 - [x] All `err.Error()[:len(x)]` slicing replaced with `strings.HasPrefix` — see DONE file
 - [ ] `go test ./...` passes with no failures
 - [ ] `staticcheck ./...` passes with no warnings
