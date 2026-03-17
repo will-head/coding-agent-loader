@@ -168,18 +168,14 @@ func (c *CacheManager) SetupVMHomebrewCache() []string {
 	return commands
 }
 
-// GetHomebrewCacheInfo returns information about the Homebrew cache.
+// getCacheInfo returns information about a cache at the given path.
 // Follows symlinks to report size from actual data location.
-func (c *CacheManager) GetHomebrewCacheInfo() (*CacheInfo, error) {
-	cachePath := c.getHomebrewCachePath()
-
-	// Resolve symlink to find where data actually lives
+func (c *CacheManager) getCacheInfo(cachePath string) (*CacheInfo, error) {
 	realPath, err := c.resolveRealCachePath(cachePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve cache path: %w", err)
 	}
 
-	// Use real path for size calculation if symlink was resolved
 	pathForSize := cachePath
 	if realPath != "" {
 		pathForSize = realPath
@@ -197,14 +193,18 @@ func (c *CacheManager) GetHomebrewCacheInfo() (*CacheInfo, error) {
 		return nil, fmt.Errorf("failed to stat cache directory: %w", err)
 	}
 
-	size := getDiskUsage(pathForSize)
-
 	return &CacheInfo{
 		Path:       cachePath,
-		Size:       size,
+		Size:       getDiskUsage(pathForSize),
 		Available:  true,
 		LastAccess: info.ModTime(),
 	}, nil
+}
+
+// GetHomebrewCacheInfo returns information about the Homebrew cache.
+// Follows symlinks to report size from actual data location.
+func (c *CacheManager) GetHomebrewCacheInfo() (*CacheInfo, error) {
+	return c.getCacheInfo(c.getHomebrewCachePath())
 }
 
 // SetupNpmCache sets up the npm cache directory on the host.
@@ -255,40 +255,7 @@ func (c *CacheManager) SetupVMNpmCache() []string {
 // GetNpmCacheInfo returns information about the npm cache.
 // Follows symlinks to report size from actual data location.
 func (c *CacheManager) GetNpmCacheInfo() (*CacheInfo, error) {
-	cachePath := c.getNpmCachePath()
-
-	// Resolve symlink to find where data actually lives
-	realPath, err := c.resolveRealCachePath(cachePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve cache path: %w", err)
-	}
-
-	// Use real path for size calculation if symlink was resolved
-	pathForSize := cachePath
-	if realPath != "" {
-		pathForSize = realPath
-	}
-
-	info, err := os.Stat(cachePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return &CacheInfo{
-				Path:      cachePath,
-				Size:      0,
-				Available: false,
-			}, nil
-		}
-		return nil, fmt.Errorf("failed to stat npm cache directory: %w", err)
-	}
-
-	size := getDiskUsage(pathForSize)
-
-	return &CacheInfo{
-		Path:       cachePath,
-		Size:       size,
-		Available:  true,
-		LastAccess: info.ModTime(),
-	}, nil
+	return c.getCacheInfo(c.getNpmCachePath())
 }
 
 // SetupGoCache sets up the Go cache directory on the host.
@@ -350,40 +317,7 @@ func (c *CacheManager) SetupVMGoCache() []string {
 // GetGoCacheInfo returns information about the Go cache.
 // Follows symlinks to report size from actual data location.
 func (c *CacheManager) GetGoCacheInfo() (*CacheInfo, error) {
-	cachePath := c.getGoCachePath()
-
-	// Resolve symlink to find where data actually lives
-	realPath, err := c.resolveRealCachePath(cachePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve cache path: %w", err)
-	}
-
-	// Use real path for size calculation if symlink was resolved
-	pathForSize := cachePath
-	if realPath != "" {
-		pathForSize = realPath
-	}
-
-	info, err := os.Stat(cachePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return &CacheInfo{
-				Path:      cachePath,
-				Size:      0,
-				Available: false,
-			}, nil
-		}
-		return nil, fmt.Errorf("failed to stat Go cache directory: %w", err)
-	}
-
-	size := getDiskUsage(pathForSize)
-
-	return &CacheInfo{
-		Path:       cachePath,
-		Size:       size,
-		Available:  true,
-		LastAccess: info.ModTime(),
-	}, nil
+	return c.getCacheInfo(c.getGoCachePath())
 }
 
 // getGitCachePath returns the host path for git cache.
@@ -391,8 +325,6 @@ func (c *CacheManager) getGitCachePath() string {
 	return filepath.Join(c.cacheBaseDir, gitCacheDir)
 }
 
-// getSharedVolumeCachePath returns the shared volume path for a cache type when running in a VM.
-// Returns empty string if not in a VM environment or if using a non-default cache base directory (e.g., in tests).
 // resolveRealCachePath resolves the real cache path by following symlinks.
 // Always starts from the local cache path (~/.calf-cache/{type}) and follows symlinks if present.
 // Returns the real path where data is stored, or empty string if path doesn't exist.
@@ -481,40 +413,7 @@ func (c *CacheManager) SetupVMGitCache() []string {
 // GetGitCacheInfo returns information about the git cache.
 // Follows symlinks to report size from actual data location.
 func (c *CacheManager) GetGitCacheInfo() (*CacheInfo, error) {
-	cachePath := c.getGitCachePath()
-
-	// Resolve symlink to find where data actually lives
-	realPath, err := c.resolveRealCachePath(cachePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve cache path: %w", err)
-	}
-
-	// Use real path for size calculation if symlink was resolved
-	pathForSize := cachePath
-	if realPath != "" {
-		pathForSize = realPath
-	}
-
-	info, err := os.Stat(cachePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return &CacheInfo{
-				Path:      cachePath,
-				Size:      0,
-				Available: false,
-			}, nil
-		}
-		return nil, fmt.Errorf("failed to stat git cache directory: %w", err)
-	}
-
-	size := getDiskUsage(pathForSize)
-
-	return &CacheInfo{
-		Path:       cachePath,
-		Size:       size,
-		Available:  true,
-		LastAccess: info.ModTime(),
-	}, nil
+	return c.getCacheInfo(c.getGitCachePath())
 }
 
 // GetCachedGitRepos returns a list of git repository names that are cached.
