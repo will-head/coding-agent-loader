@@ -23,7 +23,6 @@ The codebase was implemented before the `coops-tdd` skill was adopted. Existing 
 **Full plan:** [`docs/TDD-REMEDIATION-PLAN.md`](TDD-REMEDIATION-PLAN.md)
 
 **Summary of work (execute in order):**
-- Item 8: Add tests for `cmd/calf/config.go`; convert `os.Exit` to `RunE`
 - Item 9: Add tests for `cmd/calf/cache.go`; make stdin injectable
 - Item 10: Add root command dispatch tests for `cmd/calf/main.go`
 

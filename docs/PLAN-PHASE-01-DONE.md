@@ -854,3 +854,13 @@ Added 4 sub-tests to `TestUpdateGitRepos` (merged to 3 after code review): succe
 
 Net change: +10 lines production / +91 lines test. All 171 tests pass.
 
+### Item 8: cmd/calf/config.go — runConfigShow RunE Conversion (2026-03-17)
+
+- [x] Add tests for `cmd/calf/config.go`; convert `os.Exit` to `RunE` (completed 2026-03-17)
+
+Converted `configShowCmd` from `Run:` to `RunE:`. Replaced all three `os.Exit(1)` calls with `return fmt.Errorf(...)`. Changed all output from bare `fmt.Println`/`fmt.Printf` to `fmt.Fprintln`/`fmt.Fprintf` through `cmd.OutOrStdout()` so tests can capture output via `rootCmd.SetOut`.
+
+Created `cmd/calf/config_test.go` with 7 sub-tests in `TestConfigShow`. Extracted `setupConfigShow` helper to eliminate repeated rootCmd wiring. Tests use `t.Setenv("HOME", t.TempDir())` to isolate config paths without mocking. Key discovery: cobra's `ExecuteC()` on a child command delegates to `Root().ExecuteC()` — tests must call `rootCmd.Execute()`, not `configShowCmd.Execute()`.
+
+Net change: +1 new test file (165 lines) / +8 lines production. All 179 tests pass.
+
