@@ -150,23 +150,6 @@ func TestCacheStatus(t *testing.T) {
 	})
 }
 
-func TestNewCacheManagerInitialisesFields(t *testing.T) {
-	t.Run("when created should initialise home dir and cache base dir", func(t *testing.T) {
-		cm := NewCacheManager()
-
-		if cm == nil {
-			t.Fatalf("expected non-nil CacheManager")
-		}
-
-		if cm.homeDir == "" {
-			t.Fatalf("expected homeDir to be set")
-		}
-
-		if cm.cacheBaseDir == "" {
-			t.Fatalf("expected cacheBaseDir to be set")
-		}
-	})
-}
 
 func TestNewCacheManagerWithDirs(t *testing.T) {
 	t.Run("when dirs provided should initialise with given home and cache base dirs", func(t *testing.T) {

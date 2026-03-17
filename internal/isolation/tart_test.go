@@ -80,21 +80,6 @@ func TestVMStateString(t *testing.T) {
 }
 
 
-func TestNewTartClientSetsDefaults(t *testing.T) {
-	client := NewTartClient()
-	if client == nil {
-		t.Fatal("NewTartClient() should return non-nil client")
-	}
-	if client.installPrompt == "" {
-		t.Error("NewTartClient() should set installPrompt")
-	}
-	if client.pollInterval == 0 {
-		t.Error("NewTartClient() should set pollInterval")
-	}
-	if client.pollTimeout == 0 {
-		t.Error("NewTartClient() should set pollTimeout")
-	}
-}
 
 func TestClone(t *testing.T) {
 	t.Run("when clone succeeds should execute tart clone command with correct args", func(t *testing.T) {

@@ -12,30 +12,10 @@
 
 | # | File | Severity | Violation |
 |---|------|----------|-----------|
-| 1 | `internal/isolation/tart_test.go` | High | `TestNewTartClientSetsDefaults` tests unexported fields only |
 | 2 | `internal/isolation/tart_test.go` | High | `TestEnsureInstalled` tests unexported method `ensureInstalled()` |
-| 3 | `internal/isolation/cache_test.go` | High | `TestNewCacheManagerInitialisesFields` tests unexported fields only |
 | 4 | `internal/isolation/cache_test.go` | High | `TestNewCacheManagerWithDirs` tests unexported fields only |
 | 5 | `internal/isolation/cache_test.go` | High | Many tests access `cm.cacheBaseDir` (unexported) to build fixture paths |
 | 6 | `internal/isolation/cache_test.go` | Medium | `SetupVM*Cache` tests assert on exact shell script text |
-| 7 | `cmd/calf/config_test.go` | Low | `t.Cleanup` directly resets package-level `vmName` variable by name |
-| 8 | `internal/config/config_test.go` | Low | ~~Fragile `err.Error()[:len(expectedMsg)]` string slicing~~ ✅ Done |
-
----
-
-## Item 1 — Delete `TestNewTartClientSetsDefaults`
-
-**File:** `internal/isolation/tart_test.go` (lines 83–97)
-
-**Problem:** The test only asserts that unexported fields are non-zero after construction:
-```go
-if client.installPrompt == "" { ... }
-if client.pollInterval == 0 { ... }
-if client.pollTimeout == 0 { ... }
-```
-This is not a behaviour test. If any of these field names change, the test breaks for the wrong reason. The behaviour proof is that operations like `Clone` and `IP` actually use the defaults (covered by their own tests with overrides).
-
-**Action:** Delete `TestNewTartClientSetsDefaults` entirely. No replacement needed.
 
 ---
 
@@ -98,21 +78,6 @@ TestCloneWhenBrewIsNotAvailableAndTartNotFound
 ```
 
 **Note on `createTestClient` helper:** The existing helper pre-sets `client.tartPath` to skip `ensureInstalled` entirely. Keep this as-is for all tests that are already working correctly — the new `TestClone*` tests above must NOT use `createTestClient`, they must use `NewTartClient()` directly with only the injectable fields set.
-
----
-
-## Item 3 — Delete `TestNewCacheManagerInitialisesFields`
-
-**File:** `internal/isolation/cache_test.go` (lines 153–168)
-
-**Problem:** The test only asserts that unexported fields are non-empty after `NewCacheManager()`:
-```go
-if cm.homeDir == "" { ... }
-if cm.cacheBaseDir == "" { ... }
-```
-This tests implementation, not behaviour. The behaviour proof is that `SetupHomebrewCache()` and friends succeed, which is already covered elsewhere.
-
-**Action:** Delete `TestNewCacheManagerInitialisesFields` entirely. No replacement needed.
 
 ---
 
@@ -244,14 +209,10 @@ The nil/non-nil and nil/empty-list tests ("when home dir is unavailable should r
 
 Work through items in this order to keep the test suite green throughout:
 
-1. ~~**Item 8** — Mechanical find-and-replace, lowest risk.~~ ✅ Done
-2. **Item 7** — Investigate cobra flag reset, make minimal change. Run `go test ./...` after.
-3. **Item 3** — Delete one test function. Run `go test ./...` after.
-4. **Item 1** — Delete one test function. Run `go test ./...` after.
-5. **Item 5** — Refactor cache_test.go fixture setup (no logic change, just path sourcing). Run `go test ./...` after each test function updated.
-6. **Item 4** — Rewrite `TestNewCacheManagerWithDirs`. Run `go test ./...` after.
-7. **Item 6** — Remove shell script text assertions. Run `go test ./...` after.
-8. **Item 2** — Rewrite `TestEnsureInstalled` as public-interface tests. This is the most significant change. Run `go test ./...` after each new test written.
+1. **Item 5** — Refactor cache_test.go fixture setup (no logic change, just path sourcing). Run `go test ./...` after each test function updated.
+2. **Item 4** — Rewrite `TestNewCacheManagerWithDirs`. Run `go test ./...` after.
+3. **Item 6** — Remove shell script text assertions. Run `go test ./...` after.
+4. **Item 2** — Rewrite `TestEnsureInstalled` as public-interface tests. This is the most significant change. Run `go test ./...` after each new test written.
 
 After all items complete, run `go test ./...` and `staticcheck ./...` to confirm clean.
 
@@ -259,12 +220,9 @@ After all items complete, run `go test ./...` and `staticcheck ./...` to confirm
 
 ## Completion Criteria
 
-- [ ] `TestNewTartClientSetsDefaults` deleted
 - [ ] `TestEnsureInstalled` replaced with 5 public-interface tests via `Clone`
-- [ ] `TestNewCacheManagerInitialisesFields` deleted
 - [ ] `TestNewCacheManagerWithDirs` rewritten as behaviour test using `GetHomebrewCacheInfo`
 - [ ] All `cm.cacheBaseDir` accesses removed from cache_test.go
 - [ ] All `SetupVM*Cache` shell script text assertions replaced with structural assertions
-- [x] All `err.Error()[:len(x)]` slicing replaced with `strings.HasPrefix` — see DONE file
 - [ ] `go test ./...` passes with no failures
 - [ ] `staticcheck ./...` passes with no warnings

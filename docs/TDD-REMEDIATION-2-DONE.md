@@ -4,6 +4,30 @@
 
 ---
 
+## Item 3 — Delete `TestNewCacheManagerInitialisesFields` (2026-03-17)
+
+**File:** `internal/isolation/cache_test.go`
+
+Deleted `TestNewCacheManagerInitialisesFields` entirely. The test only asserted that unexported fields (`homeDir`, `cacheBaseDir`) were non-empty after `NewCacheManager()` — testing implementation, not behaviour. The observable outcome (that the manager works correctly) is already covered by `TestHomebrewCacheSetup` and other setup tests.
+
+**Completion criteria met:**
+- [x] `TestNewCacheManagerInitialisesFields` deleted (no replacement needed)
+- [x] `go test ./...` passes (205 tests)
+
+---
+
+## Item 1 — Delete `TestNewTartClientSetsDefaults` (2026-03-17)
+
+**File:** `internal/isolation/tart_test.go`
+
+Deleted `TestNewTartClientSetsDefaults` entirely. The test only asserted that unexported fields (`installPrompt`, `pollInterval`, `pollTimeout`) were non-zero after `NewTartClient()` — testing implementation, not behaviour. The behaviour proof (that defaults are actually used) is covered by `Clone`, `IP`, and other operation tests.
+
+**Completion criteria met:**
+- [x] `TestNewTartClientSetsDefaults` deleted (no replacement needed)
+- [x] `go test ./...` passes (204 tests)
+
+---
+
 ## Item 7 — Fix `vmName` cleanup in config_test.go (2026-03-17)
 
 **File:** `cmd/calf/config_test.go`
