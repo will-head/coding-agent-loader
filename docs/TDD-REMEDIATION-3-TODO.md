@@ -62,37 +62,6 @@ Run `go test ./internal/isolation/... -run TestCloneWhen` — all 5 pass.
 
 ---
 
-## Item 3 — Export `cacheDirMount` as `CacheDirMount` (WARN)
-
-**Files:** `internal/isolation/tart.go` (line 32), `internal/isolation/tart_test.go` (lines 588, 606)
-
-**Problem:** Tests reference `cacheDirMount` — an unexported package-level constant — to construct the expected `--dir=...` flag. Tests in the same package can access it, but it couples tests to an internal name.
-
-**Action:** Rename `cacheDirMount` → `CacheDirMount` (export it). Update all references in production code and tests.
-
-In `tart.go` line 32, change the constant declaration:
-```go
-// Before:
-cacheDirMount = "tart-cache:~/.tart/cache:ro"
-
-// After:
-// CacheDirMount is the virtio-fs cache sharing directory mount path (read-only).
-// TODO: Use virtio-fs mount system (like calf-cache) instead of symlink approach.
-// calf-bootstrap uses symlinks for tart-cache (fine for bootstrap), but the Go
-// implementation should mount /Volumes/My Shared Files/tart-cache via virtio-fs
-// for consistency with the calf-cache architecture. See calf-mount-shares.sh and
-// ADR-003 for mount system details.
-CacheDirMount = "tart-cache:~/.tart/cache:ro"
-```
-
-In `RunWithCacheDirs` (line 219), update the reference from `cacheDirMount` to `CacheDirMount`.
-
-In `tart_test.go` lines 588 and 606, update `cacheDirMount` to `CacheDirMount`.
-
-Run `go build ./...` and `go test ./...` — all pass. `staticcheck ./...` — clean.
-
----
-
 ## Item 4 — Move `ensureInstalled` from `runTartCommand` to Public Methods (FAIL — production change)
 
 **File:** `internal/isolation/tart.go`
@@ -711,7 +680,7 @@ Work through items strictly in this order to keep the test suite green throughou
 
 1. ~~**Item 1** — `TestVMStateString` rename. DONE.~~
 2. ~~**Item 2** — `TestCloneWhenTart*` `t.Run` wrapping. DONE.~~
-3. **Item 3** — Export `CacheDirMount`. Pure rename. Run `go test ./...`.
+3. ~~**Item 3** — `cacheDirMount` coupling. DONE (no change — coupling resolved by Items 5–6).~~
 4. **Item 4** — Move `ensureInstalled` to public methods (production change). Run `go test ./...` after each method updated.
 5. **Item 5** — Add functional options + update `NewTartClient` (production change). Run `go test ./...`.
 6. **Item 6** — Rewrite `createTestClient` using options. Run `go test ./...`.
@@ -726,8 +695,8 @@ Final check: `go test ./...` and `staticcheck ./...` must both pass clean.
 
 ## Completion Criteria
 
-- [ ] `TestCloneWhenTart*` functions wrap bodies in `t.Run("when...should...", ...)`
-- [ ] `cacheDirMount` exported as `CacheDirMount`; all references updated
+- [x] `TestCloneWhenTart*` functions wrap bodies in `t.Run("when...should...", ...)`
+- [x] `cacheDirMount` coupling assessed; no export needed — addressed by Items 5–6
 - [ ] `ensureInstalled` removed from `runTartCommand`; added to `Clone`, `Set`, `RunWithCacheDirs`, `Stop`, `Delete`, `List`, `IP`
 - [ ] `TartClientOption` type exported; 7 option functions added: `WithRunCommand`, `WithPollInterval`, `WithPollTimeout`, `WithTartPath`, `WithLookPath`, `WithStdinReader`, `WithBrewRunner`
 - [ ] `NewTartClient` accepts `...TartClientOption` (backwards-compatible)
