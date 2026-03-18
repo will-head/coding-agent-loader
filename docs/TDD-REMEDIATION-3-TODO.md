@@ -578,9 +578,9 @@ Work through items strictly in this order to keep the test suite green throughou
 5. ~~**Item 5** — Add functional options + update `NewTartClient` (production change). DONE.~~
 6. ~~**Item 6** — Rewrite `createTestClient` using options. Run `go test ./...`. DONE.~~
 7. ~~**Item 7** — Fix `client.pollTimeout` direct write. Run `go test ./internal/isolation/... -run TestIP`. DONE.~~
-8. **Item 8** — Rewrite `TestCloneWhenTart*` using options. Run `go test ./internal/isolation/...`.
-9. **Item 9** — Delete `makeInstallingRunCommand`. Run `go test ./...`.
-10. **Item 10** — `newRootCmd()` and `newConfigCmd()` factories + fix `config_test.go` and `main_test.go`. Run `go test ./...`.
+8. ~~**Item 8** — Rewrite `TestCloneWhenTart*` using options. Run `go test ./internal/isolation/...`. DONE.~~
+9. ~~**Item 9** — Delete `makeInstallingRunCommand`. Run `go test ./...`. DONE.~~
+10. ~~**Item 10** — `newRootCmd()` and `newConfigCmd()` factories + fix `config_test.go` and `main_test.go`. Run `go test ./...`. DONE.~~
 
 Final check: `go test ./...` and `staticcheck ./...` must both pass clean.
 
@@ -595,12 +595,3 @@ Final check: `go test ./...` and `staticcheck ./...` must both pass clean.
 - [x] `NewTartClient` accepts `...TartClientOption` (backwards-compatible)
 - [x] `createTestClient` uses `WithTartPath`, `WithPollInterval`, `WithPollTimeout`, `WithRunCommand` — no unexported field writes
 - [x] `client.pollTimeout = ...` at line 281 replaced with `WithPollTimeout` via `createTestClient` extra arg
-- [ ] `TestCloneWhenTart*` uses `WithLookPath`, `WithStdinReader`, `WithBrewRunner`, `WithRunCommand` — no unexported field writes
-- [ ] `makeInstallingRunCommand` deleted; no references remain
-- [ ] `newConfigCmd()` factory added to `config.go`; global `configCmd`, `configShowCmd`, `vmName` vars and `init()` removed
-- [ ] `newRootCmd()` factory added to `main.go`; wires `newConfigCmd()` and `newCacheCmd()`
-- [ ] `config_test.go`: `setupConfigShow` returns fresh `cmd` via `newRootCmd()`; no `configShowCmd` reference; no flag cleanup
-- [ ] `main_test.go`: all tests use `newRootCmd()` per test; no shared `rootCmd` mutations
-- [ ] `go test ./...` passes (test count ≥ 203)
-- [ ] `go test -count=2 ./cmd/calf/...` passes (proves no shared state leakage)
-- [ ] `staticcheck ./...` passes with no warnings

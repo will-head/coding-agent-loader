@@ -86,6 +86,47 @@ Replaced `client.pollTimeout = 50 * time.Millisecond` (direct unexported field w
 
 ---
 
+## Item 8 — Rewrite `TestCloneWhenTart*` Using Options (2026-03-18)
+
+**File:** `internal/isolation/tart_test.go`
+
+Replaced direct unexported field assignments (`lookPath`, `stdinReader`, `runBrewCommand`, `runCommand`) in all five `TestCloneWhenTart*` functions with `NewTartClient(...)` calls using functional options (`WithLookPath`, `WithStdinReader`, `WithBrewRunner`, `WithRunCommand`). Applied inside the `t.Run("when...should...", ...)` wrappers added in Item 2. Commit `4b0ebe9`.
+
+**Completion criteria met:**
+- [x] `TestCloneWhenTart*` uses `WithLookPath`, `WithStdinReader`, `WithBrewRunner`, `WithRunCommand` — no unexported field writes
+- [x] `go test ./internal/isolation/... -run TestCloneWhen` — all 5 pass
+
+---
+
+## Item 9 — Delete `makeInstallingRunCommand` (2026-03-18)
+
+**File:** `internal/isolation/tart_test.go`
+
+Deleted `makeInstallingRunCommand` helper (lines 757–766) which called `client.ensureInstalled()` — an unexported method. After Item 4 moved `ensureInstalled` into public methods and Item 8 rewrote all callers, no test referenced `makeInstallingRunCommand`. Verified no remaining references. Commit `4b0ebe9`.
+
+**Completion criteria met:**
+- [x] `makeInstallingRunCommand` deleted; no references remain
+- [x] `go build ./...` succeeds; `go test ./...` passes (208 tests)
+
+---
+
+## Item 10 — `newRootCmd()` / `newConfigCmd()` Factories (2026-03-18)
+
+**Files:** `cmd/calf/main.go`, `cmd/calf/config.go`, `cmd/calf/main_test.go`, `cmd/calf/config_test.go`
+
+Added `newConfigCmd()` factory to `config.go`; removed global `configCmd`, `configShowCmd`, `vmName` vars and `init()`. Added `newRootCmd()` factory to `main.go` wiring `newConfigCmd()` and `newCacheCmd()`. Rewrote `config_test.go` `setupConfigShow` to return a fresh `cmd` via `newRootCmd()` — no `configShowCmd` reference, no flag cleanup needed. Rewrote all `main_test.go` tests to use `newRootCmd()` per test — no shared `rootCmd` mutations, no `t.Cleanup` teardown. Commit `2c17cf4`.
+
+**Completion criteria met:**
+- [x] `newConfigCmd()` factory added to `config.go`; global `configCmd`, `configShowCmd`, `vmName` vars and `init()` removed
+- [x] `newRootCmd()` factory added to `main.go`; wires `newConfigCmd()` and `newCacheCmd()`
+- [x] `config_test.go`: `setupConfigShow` returns fresh `cmd` via `newRootCmd()`; no `configShowCmd` reference; no flag cleanup
+- [x] `main_test.go`: all tests use `newRootCmd()` per test; no shared `rootCmd` mutations
+- [x] `go test ./...` passes (208 tests)
+- [x] `go test -count=2 ./cmd/calf/...` passes (proves no shared state leakage)
+- [x] `staticcheck ./...` passes with no warnings
+
+---
+
 ## Item 4 — Move `ensureInstalled` to Public Methods (2026-03-18)
 
 **File:** `internal/isolation/tart.go`
