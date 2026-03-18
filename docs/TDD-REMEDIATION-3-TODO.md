@@ -710,7 +710,7 @@ All must pass.
 Work through items strictly in this order to keep the test suite green throughout:
 
 1. ~~**Item 1** — `TestVMStateString` rename. DONE.~~
-2. **Item 2** — `TestCloneWhenTart*` `t.Run` wrapping. Pure restructure, no logic change. Run `go test ./internal/isolation/...`.
+2. ~~**Item 2** — `TestCloneWhenTart*` `t.Run` wrapping. DONE.~~
 3. **Item 3** — Export `CacheDirMount`. Pure rename. Run `go test ./...`.
 4. **Item 4** — Move `ensureInstalled` to public methods (production change). Run `go test ./...` after each method updated.
 5. **Item 5** — Add functional options + update `NewTartClient` (production change). Run `go test ./...`.
