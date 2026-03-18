@@ -50,6 +50,7 @@ For changes **only** to `.md` files or code comments:
 
 ### Step 1: Implement
 
+- **Read `CODING_STANDARDS.md`** before writing any code
 - **Invoke the `coops-tdd` skill first** — this is mandatory before writing any code, no exceptions
 - The skill structures implementation via TDD: write failing test → implement minimum code → refactor
 - Follow Go conventions and shell script best practices
