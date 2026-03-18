@@ -44,3 +44,18 @@ Wrapped each of the five `TestCloneWhenTart*` flat function bodies in a `t.Run("
 
 **Completion criteria met:**
 - [x] Item assessed; no code change warranted; coupling addressed by Items 5–6
+
+---
+
+## Item 4 — Move `ensureInstalled` to Public Methods (2026-03-18)
+
+**File:** `internal/isolation/tart.go`
+
+Removed `c.ensureInstalled()` from `runTartCommand` (lines 151–153). Added the call at the top of each public method that dispatches commands: `Clone`, `Set`, `RunWithCacheDirs`, `Stop`, `Delete`, `List`, `IP`. `Run` delegates to `RunWithCacheDirs` so no guard needed there. `Get`, `IsRunning`, `Exists`, `GetState` delegate to `List` so no guard needed there either.
+
+Error wrapping for the `ensureInstalled` call in `RunWithCacheDirs` was kept consistent with all other methods (raw error, no wrapping).
+
+**Completion criteria met:**
+- [x] `ensureInstalled` removed from `runTartCommand`; added to `Clone`, `Set`, `RunWithCacheDirs`, `Stop`, `Delete`, `List`, `IP`
+- [x] `go test ./...` passes (208 tests)
+- [x] `staticcheck ./...` clean

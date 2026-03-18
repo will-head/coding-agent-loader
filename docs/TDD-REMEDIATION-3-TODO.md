@@ -62,113 +62,6 @@ Run `go test ./internal/isolation/... -run TestCloneWhen` — all 5 pass.
 
 ---
 
-## Item 4 — Move `ensureInstalled` from `runTartCommand` to Public Methods (FAIL — production change)
-
-**File:** `internal/isolation/tart.go`
-
-**Problem:** `ensureInstalled()` is called inside `runTartCommand` (line 151). When tests override `runCommand` with a mock, they bypass `ensureInstalled` entirely. Tests that need to exercise the installation path are forced to call `ensureInstalled` directly via `makeInstallingRunCommand` — a helper that calls an unexported method (Item 6).
-
-**Design:** Move `c.ensureInstalled()` out of `runTartCommand` and into each public method that dispatches commands. `runTartCommand` becomes a pure executor that assumes `tartPath` is already set. Tests that pre-set `tartPath` (via `WithTartPath` after Item 5) still work because `ensureInstalled` returns immediately when `tartPath` is non-empty. Tests for the installation path inject `lookPath`, `stdinReader`, `runBrewCommand` — the fields `ensureInstalled` uses — and exercise it through the public methods naturally.
-
-**Changes to `tart.go`:**
-
-**1. Remove `ensureInstalled` from `runTartCommand`** (lines 151–153):
-```go
-// Delete these three lines from runTartCommand:
-if err := c.ensureInstalled(); err != nil {
-    return "", err
-}
-```
-
-**2. Add `ensureInstalled` to `Clone`:**
-```go
-func (c *TartClient) Clone(image, name string) error {
-    if err := c.ensureInstalled(); err != nil {
-        return err
-    }
-    if _, err := c.runCommand("clone", image, name); err != nil {
-        return fmt.Errorf("failed to clone VM %s from %s: %w", name, image, err)
-    }
-    return nil
-}
-```
-
-**3. Add `ensureInstalled` to `Set`** — insert before the `args` slice construction:
-```go
-func (c *TartClient) Set(name string, cpu int, memory int, disk string) error {
-    if err := c.ensureInstalled(); err != nil {
-        return err
-    }
-    args := []string{"set", name}
-    // ... rest unchanged ...
-}
-```
-
-**4. Add `ensureInstalled` to `RunWithCacheDirs`** — insert before `args` slice construction:
-```go
-func (c *TartClient) RunWithCacheDirs(name string, headless, vnc bool, dirs []string, cacheDirs []string) error {
-    if err := c.ensureInstalled(); err != nil {
-        return fmt.Errorf("failed to start VM %s: %w", name, err)
-    }
-    args := []string{"run"}
-    // ... rest unchanged ...
-}
-```
-
-**5. Add `ensureInstalled` to `Stop`** — insert before `args` slice construction:
-```go
-func (c *TartClient) Stop(name string, force bool) error {
-    if err := c.ensureInstalled(); err != nil {
-        return err
-    }
-    args := []string{"stop", name}
-    // ... rest unchanged ...
-}
-```
-
-**6. Add `ensureInstalled` to `Delete`** — insert before `runCommand`:
-```go
-func (c *TartClient) Delete(name string) error {
-    if err := c.ensureInstalled(); err != nil {
-        return err
-    }
-    if _, err := c.runCommand("delete", name); err != nil {
-        return fmt.Errorf("failed to delete VM %s: %w", name, err)
-    }
-    return nil
-}
-```
-
-**7. Add `ensureInstalled` to `List`** — insert before `runCommand`:
-```go
-func (c *TartClient) List() (TartListOutput, error) {
-    if err := c.ensureInstalled(); err != nil {
-        return nil, err
-    }
-    output, err := c.runCommand("list", "--format", "json")
-    // ... rest unchanged ...
-}
-```
-
-**8. Add `ensureInstalled` to `IP`** — insert before the polling loop:
-```go
-func (c *TartClient) IP(name string, timeout time.Duration) (string, error) {
-    if err := c.ensureInstalled(); err != nil {
-        return "", err
-    }
-    if timeout == 0 {
-        timeout = c.pollTimeout
-    }
-    // ... rest unchanged ...
-}
-```
-
-**Not needed:** `Run` calls `RunWithCacheDirs` (which handles it). `Get`, `IsRunning`, `Exists`, `GetState` call `List` (which handles it).
-
-Run `go test ./...` — all tests pass. The tests using `createTestClient` still work because `tartPath` is pre-set and `ensureInstalled` returns immediately.
-
----
-
 ## Item 5 — Add Functional Options to `TartClient` (FAIL — production change, requires Item 4)
 
 **File:** `internal/isolation/tart.go`
@@ -681,7 +574,7 @@ Work through items strictly in this order to keep the test suite green throughou
 1. ~~**Item 1** — `TestVMStateString` rename. DONE.~~
 2. ~~**Item 2** — `TestCloneWhenTart*` `t.Run` wrapping. DONE.~~
 3. ~~**Item 3** — `cacheDirMount` coupling. DONE (no change — coupling resolved by Items 5–6).~~
-4. **Item 4** — Move `ensureInstalled` to public methods (production change). Run `go test ./...` after each method updated.
+4. ~~**Item 4** — Move `ensureInstalled` to public methods (production change). DONE.~~
 5. **Item 5** — Add functional options + update `NewTartClient` (production change). Run `go test ./...`.
 6. **Item 6** — Rewrite `createTestClient` using options. Run `go test ./...`.
 7. **Item 7** — Fix `client.pollTimeout` direct write. Run `go test ./internal/isolation/... -run TestIP`.
@@ -697,7 +590,7 @@ Final check: `go test ./...` and `staticcheck ./...` must both pass clean.
 
 - [x] `TestCloneWhenTart*` functions wrap bodies in `t.Run("when...should...", ...)`
 - [x] `cacheDirMount` coupling assessed; no export needed — addressed by Items 5–6
-- [ ] `ensureInstalled` removed from `runTartCommand`; added to `Clone`, `Set`, `RunWithCacheDirs`, `Stop`, `Delete`, `List`, `IP`
+- [x] `ensureInstalled` removed from `runTartCommand`; added to `Clone`, `Set`, `RunWithCacheDirs`, `Stop`, `Delete`, `List`, `IP`
 - [ ] `TartClientOption` type exported; 7 option functions added: `WithRunCommand`, `WithPollInterval`, `WithPollTimeout`, `WithTartPath`, `WithLookPath`, `WithStdinReader`, `WithBrewRunner`
 - [ ] `NewTartClient` accepts `...TartClientOption` (backwards-compatible)
 - [ ] `createTestClient` uses `WithTartPath`, `WithPollInterval`, `WithPollTimeout`, `WithRunCommand` — no unexported field writes

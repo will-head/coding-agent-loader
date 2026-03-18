@@ -148,10 +148,6 @@ func (c *TartClient) ensureInstalled() error {
 
 // runTartCommand executes a Tart CLI command and returns combined stdout/stderr.
 func (c *TartClient) runTartCommand(args ...string) (string, error) {
-	if err := c.ensureInstalled(); err != nil {
-		return "", err
-	}
-
 	cmd := exec.Command(c.tartPath, args...)
 
 	var stdout, stderr bytes.Buffer
@@ -168,6 +164,9 @@ func (c *TartClient) runTartCommand(args ...string) (string, error) {
 
 // Clone clones a VM from an image or local VM.
 func (c *TartClient) Clone(image, name string) error {
+	if err := c.ensureInstalled(); err != nil {
+		return err
+	}
 	if _, err := c.runCommand("clone", image, name); err != nil {
 		return fmt.Errorf("failed to clone VM %s from %s: %w", name, image, err)
 	}
@@ -176,6 +175,9 @@ func (c *TartClient) Clone(image, name string) error {
 
 // Set configures VM resources (CPU, memory, disk size).
 func (c *TartClient) Set(name string, cpu int, memory int, disk string) error {
+	if err := c.ensureInstalled(); err != nil {
+		return err
+	}
 	args := []string{"set", name}
 
 	if cpu > 0 {
@@ -206,6 +208,9 @@ func (c *TartClient) Run(name string, headless, vnc bool, dirs []string) error {
 // RunWithCacheDirs starts a VM with cache directories shared.
 // cacheDirs specifies additional directories to share for caching (e.g., Homebrew cache).
 func (c *TartClient) RunWithCacheDirs(name string, headless, vnc bool, dirs []string, cacheDirs []string) error {
+	if err := c.ensureInstalled(); err != nil {
+		return err
+	}
 	args := []string{"run"}
 
 	if headless {
@@ -237,6 +242,9 @@ func (c *TartClient) RunWithCacheDirs(name string, headless, vnc bool, dirs []st
 
 // Stop stops a running VM.
 func (c *TartClient) Stop(name string, force bool) error {
+	if err := c.ensureInstalled(); err != nil {
+		return err
+	}
 	args := []string{"stop", name}
 	if force {
 		args = append(args, "--timeout=0")
@@ -251,6 +259,9 @@ func (c *TartClient) Stop(name string, force bool) error {
 
 // Delete deletes a VM.
 func (c *TartClient) Delete(name string) error {
+	if err := c.ensureInstalled(); err != nil {
+		return err
+	}
 	if _, err := c.runCommand("delete", name); err != nil {
 		return fmt.Errorf("failed to delete VM %s: %w", name, err)
 	}
@@ -259,6 +270,9 @@ func (c *TartClient) Delete(name string) error {
 
 // List lists all VMs with JSON format for sizes.
 func (c *TartClient) List() (TartListOutput, error) {
+	if err := c.ensureInstalled(); err != nil {
+		return nil, err
+	}
 	output, err := c.runCommand("list", "--format", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list VMs: %w", err)
@@ -274,6 +288,9 @@ func (c *TartClient) List() (TartListOutput, error) {
 
 // IP gets the IP address of a running VM, with optional polling for boot.
 func (c *TartClient) IP(name string, timeout time.Duration) (string, error) {
+	if err := c.ensureInstalled(); err != nil {
+		return "", err
+	}
 	if timeout == 0 {
 		timeout = c.pollTimeout
 	}
