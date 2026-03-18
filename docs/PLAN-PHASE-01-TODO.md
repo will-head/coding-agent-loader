@@ -14,37 +14,6 @@
 
 ## Critical Issues - HIGHEST PRIORITY
 
-### 5a. Future: Go Privileged Helper Daemon for pf Management
-
-**Context:** The current `--gui` background watcher uses a shell loop + sudoers NOPASSWD entry
-(`/etc/sudoers.d/calf-pfctl`) to remove pf rules when the VM stops. This works but has a
-5-second poll delay and requires a one-time sudoers setup.
-
-**Goal:** Replace the shell watcher with a small Go `LaunchDaemon` that manages pf rule
-lifetime using `kqueue EVFILT_PROC NOTE_EXIT` — the same pattern used by Docker Desktop
-(`com.docker.vmnetd`) and Mullvad VPN.
-
-**Design:**
-- Small Go binary (`calf-netd`) running as a root `LaunchDaemon`
-- Listens on a Unix socket; accepts two messages: `load-anchor <vm-ip>` and `unload-anchor`
-- Uses `kqueue EVFILT_PROC NOTE_EXIT` to watch the tart PID — no polling
-- Calls `pfctl` to load/flush the anchor atomically
-- Crash-safe: if tart dies unexpectedly, kqueue fires immediately and rules are removed
-- Removes need for `/etc/sudoers.d/calf-pfctl` entirely
-
-**Why deferred:**
-- Requires Go binary + `LaunchDaemon` plist installation (higher setup cost)
-- Current sudoers approach works well enough for Phase 1
-- Natural fit for Phase 1 CLI work when the Go `calf isolation` command is built
-
-**Implementation notes:**
-- See research findings: macOS pf has NO automatic anchor cleanup on process exit (confirmed via `xnu/bsd/net/pf_ioctl.c`)
-- The pf token system (`-E`/`-X` flags, `DIOCSTARTREF`/`DIOCSTOPREF`) controls only whether pf is enabled — does NOT affect anchor lifetime
-- `kqueue EVFILT_PROC` with `NOTE_EXIT` is the correct kernel mechanism for PID death watching
-- Reference implementations: `mullvad/pfctl-rs`, Docker Desktop `vmnetd`
-
----
-
 ### 6. Repository Rename - launcher → loader (HIGH PRIORITY)
 
 **Problem:** Repository name `coding-agent-launcher` doesn't match the CALF acronym (Coding Agent **L**oader).
@@ -302,6 +271,19 @@ lifetime using `kqueue EVFILT_PROC NOTE_EXIT` — the same pattern used by Docke
    - `--no-smb-block` — disable SMB blocking (testing only)
    - `--clear-smb-block` — emergency: flush stuck pf rules
    - `--remove-smb-permissions` — remove `/etc/sudoers.d/calf-pfctl`
+
+**Dependency — `calf isolation gui` requires `calf-netd` (Go Privileged Helper Daemon):**
+
+Go cannot reliably replicate shell `disown`/background subshells for pf cleanup. Implement `calf-netd` alongside or just before `calf isolation gui`.
+
+- Small Go binary (`calf-netd`) running as a root `LaunchDaemon`
+- Listens on a Unix socket; accepts `load-anchor <vm-ip>` and `unload-anchor` messages
+- Uses `kqueue EVFILT_PROC NOTE_EXIT` to watch the tart PID — fires immediately on exit, no polling
+- Calls `pfctl` to load/flush the anchor atomically; crash-safe
+- Eliminates need for `/etc/sudoers.d/calf-pfctl` entirely
+- Reference implementations: `mullvad/pfctl-rs`, Docker Desktop `vmnetd`
+- macOS pf has NO automatic anchor cleanup on process exit (confirmed via `xnu/bsd/net/pf_ioctl.c`)
+- The pf token system (`-E`/`-X` flags) controls only whether pf is enabled — does NOT affect anchor lifetime
 
 **Key learnings for Go implementation (from calf-bootstrap pf work):**
 - `setup_smb_block_permissions()` must run BEFORE VM starts — eliminates the security window where VM runs with no block; NOPASSWD allows password-free operation after one-time setup
