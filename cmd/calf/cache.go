@@ -5,16 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/will-head/coding-agent-launcher/internal/isolation"
 )
-
-func init() {
-	rootCmd.AddCommand(newCacheCmd(os.Stdin, ""))
-}
 
 // newCacheCmd creates the cache command group with injectable stdin and homeDir.
 // Pass an empty homeDir to use the default (current user's home directory).
@@ -76,7 +72,7 @@ Use --homebrew, --npm, --go, or --git to clear a specific cache type.`,
 // newCacheManager creates a CacheManager, using a custom homeDir when non-empty.
 func newCacheManager(homeDir string) *isolation.CacheManager {
 	if homeDir != "" {
-		return isolation.NewCacheManagerWithDirs(homeDir, homeDir+"/.calf-cache")
+		return isolation.NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, ".calf-cache"))
 	}
 	return isolation.NewCacheManager()
 }

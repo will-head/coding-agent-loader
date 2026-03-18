@@ -7,26 +7,30 @@ import (
 	"github.com/will-head/coding-agent-launcher/internal/config"
 )
 
-var vmName string
+// newConfigCmd constructs the config cobra command with all subcommands wired.
+func newConfigCmd() *cobra.Command {
+	configCmd := &cobra.Command{
+		Use:   "config",
+		Short: "Manage CALF configuration",
+	}
 
-var configCmd = &cobra.Command{
-	Use:   "config",
-	Short: "Manage CALF configuration",
-}
-
-var configShowCmd = &cobra.Command{
-	Use:   "show",
-	Short: "Display effective configuration",
-	RunE:  runConfigShow,
-}
-
-func init() {
-	configShowCmd.Flags().StringVarP(&vmName, "vm", "v", "", "VM name to show config for")
+	configShowCmd := &cobra.Command{
+		Use:   "show",
+		Short: "Display effective configuration",
+		RunE:  runConfigShow,
+	}
+	configShowCmd.Flags().StringP("vm", "v", "", "VM name to show config for")
 	configCmd.AddCommand(configShowCmd)
-	rootCmd.AddCommand(configCmd)
+
+	return configCmd
 }
 
 func runConfigShow(cmd *cobra.Command, args []string) error {
+	vmName, err := cmd.Flags().GetString("vm")
+	if err != nil {
+		return fmt.Errorf("getting vm flag: %w", err)
+	}
+
 	globalConfigPath, err := config.GetDefaultConfigPath()
 	if err != nil {
 		return fmt.Errorf("getting default config path: %w", err)
