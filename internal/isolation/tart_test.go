@@ -102,20 +102,21 @@ func TestVMStateString(t *testing.T) {
 
 func TestClone(t *testing.T) {
 	t.Run("when clone succeeds should execute tart clone command with correct args", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		mock.addOutput("clone test-image test-vm", "")
-
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Clone("test-image", "test-vm")
+
+		// Assert
 		if err != nil {
 			t.Errorf("Clone() unexpected error = %v", err)
 		}
-
 		if len(mock.commands) != 1 {
 			t.Errorf("Expected 1 command, got %d", len(mock.commands))
 		}
-
 		expected := []string{"tart", "clone", "test-image", "test-vm"}
 		if !slices.Equal(mock.commands[0], expected) {
 			t.Errorf("Clone() command = %v, want %v", mock.commands[0], expected)
@@ -123,16 +124,18 @@ func TestClone(t *testing.T) {
 	})
 
 	t.Run("when clone fails should return wrapped error", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		mock.addError("clone test-image test-vm", fmt.Errorf("clone failed"))
-
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Clone("test-image", "test-vm")
+
+		// Assert
 		if err == nil {
 			t.Error("Clone() expected error, got nil")
 		}
-
 		if !strings.Contains(err.Error(), "failed to clone VM") {
 			t.Errorf("Clone() error should contain context, got: %v", err)
 		}
@@ -141,16 +144,18 @@ func TestClone(t *testing.T) {
 
 func TestSet(t *testing.T) {
 	t.Run("when all params provided should include cpu memory and disk size flags", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		mock.addOutput("set test-vm --cpu=4 --memory=8192 --disk-size=80", "")
-
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Set("test-vm", 4, 8192, "80")
+
+		// Assert
 		if err != nil {
 			t.Errorf("Set() unexpected error = %v", err)
 		}
-
 		expected := []string{"tart", "set", "test-vm", "--cpu=4", "--memory=8192", "--disk-size=80"}
 		if !slices.Equal(mock.commands[0], expected) {
 			t.Errorf("Set() command = %v, want %v", mock.commands[0], expected)
@@ -158,16 +163,18 @@ func TestSet(t *testing.T) {
 	})
 
 	t.Run("when only cpu provided should include only cpu flag", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		mock.addOutput("set test-vm --cpu=4", "")
-
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Set("test-vm", 4, 0, "")
+
+		// Assert
 		if err != nil {
 			t.Errorf("Set() unexpected error = %v", err)
 		}
-
 		expected := []string{"tart", "set", "test-vm", "--cpu=4"}
 		if !slices.Equal(mock.commands[0], expected) {
 			t.Errorf("Set() command = %v, want %v", mock.commands[0], expected)
@@ -177,16 +184,18 @@ func TestSet(t *testing.T) {
 
 func TestStop(t *testing.T) {
 	t.Run("when force is false should execute stop without timeout flag", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		mock.addOutput("stop test-vm", "")
-
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Stop("test-vm", false)
+
+		// Assert
 		if err != nil {
 			t.Errorf("Stop() unexpected error = %v", err)
 		}
-
 		expected := []string{"tart", "stop", "test-vm"}
 		if !slices.Equal(mock.commands[0], expected) {
 			t.Errorf("Stop() command = %v, want %v", mock.commands[0], expected)
@@ -194,16 +203,18 @@ func TestStop(t *testing.T) {
 	})
 
 	t.Run("when force is true should pass timeout zero flag", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		mock.addOutput("stop test-vm --timeout=0", "")
-
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Stop("test-vm", true)
+
+		// Assert
 		if err != nil {
 			t.Errorf("Stop() unexpected error = %v", err)
 		}
-
 		expected := []string{"tart", "stop", "test-vm", "--timeout=0"}
 		if !slices.Equal(mock.commands[0], expected) {
 			t.Errorf("Stop() command = %v, want %v", mock.commands[0], expected)
@@ -213,16 +224,18 @@ func TestStop(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	t.Run("when vm exists should execute tart delete with vm name", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		mock.addOutput("delete test-vm", "")
-
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Delete("test-vm")
+
+		// Assert
 		if err != nil {
 			t.Errorf("Delete() unexpected error = %v", err)
 		}
-
 		expected := []string{"tart", "delete", "test-vm"}
 		if !slices.Equal(mock.commands[0], expected) {
 			t.Errorf("Delete() command = %v, want %v", mock.commands[0], expected)
@@ -232,44 +245,46 @@ func TestDelete(t *testing.T) {
 
 func TestList(t *testing.T) {
 	t.Run("when tart returns valid json should parse vm list", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		jsonOutput := `[
 		{"name":"calf-dev","state":"running","size":10.5},
 		{"name":"calf-clean","state":"stopped","size":8.2}
 	]`
 		mock.addOutput("list --format json", jsonOutput)
-
 		client := createTestClient(mock)
 
+		// Act
 		vms, err := client.List()
+
+		// Assert
 		if err != nil {
 			t.Errorf("List() unexpected error = %v", err)
 		}
-
 		if len(vms) != 2 {
 			t.Errorf("List() returned %d VMs, want 2", len(vms))
 		}
-
 		if vms[0].Name != "calf-dev" || vms[0].State != StateRunning {
 			t.Errorf("List() first VM = %+v, want calf-dev running", vms[0])
 		}
-
 		if vms[1].Name != "calf-clean" || vms[1].State != StateStopped {
 			t.Errorf("List() second VM = %+v, want calf-clean stopped", vms[1])
 		}
 	})
 
 	t.Run("when tart returns invalid json should return parse error", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		mock.addOutput("list --format json", "invalid json")
-
 		client := createTestClient(mock)
 
+		// Act
 		_, err := client.List()
+
+		// Assert
 		if err == nil {
 			t.Error("List() expected error for invalid JSON, got nil")
 		}
-
 		if !strings.Contains(err.Error(), "failed to parse VM list JSON") {
 			t.Errorf("List() error should indicate JSON parse failure, got: %v", err)
 		}
@@ -278,33 +293,36 @@ func TestList(t *testing.T) {
 
 func TestIP(t *testing.T) {
 	t.Run("when vm acquires ip should return ip address", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		mock.addOutput("ip test-vm", "192.168.64.10\n")
-
 		client := createTestClient(mock)
 
+		// Act
 		ip, err := client.IP("test-vm", 0)
+
+		// Assert
 		if err != nil {
 			t.Errorf("IP() unexpected error = %v", err)
 		}
-
 		if ip != "192.168.64.10" {
 			t.Errorf("IP() = %v, want 192.168.64.10", ip)
 		}
 	})
 
 	t.Run("when vm does not acquire ip within timeout should return error", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
-		// Always return error to simulate VM not ready
 		mock.addError("ip test-vm", fmt.Errorf("vm not ready"))
-
 		client := createTestClient(mock, WithPollTimeout(50*time.Millisecond))
 
+		// Act
 		_, err := client.IP("test-vm", 0)
+
+		// Assert
 		if err == nil {
 			t.Error("IP() expected timeout error, got nil")
 		}
-
 		if !strings.Contains(err.Error(), "did not acquire an IP") {
 			t.Errorf("IP() error should indicate timeout, got: %v", err)
 		}
@@ -313,37 +331,41 @@ func TestIP(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	t.Run("when vm exists in list should return vm info", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		jsonOutput := `[
 		{"name":"calf-dev","state":"running","size":10.5},
 		{"name":"test-vm","state":"stopped","size":8.2}
 	]`
 		mock.addOutput("list --format json", jsonOutput)
-
 		client := createTestClient(mock)
 
+		// Act
 		vm, err := client.Get("test-vm")
+
+		// Assert
 		if err != nil {
 			t.Errorf("Get() unexpected error = %v", err)
 		}
-
 		if vm.Name != "test-vm" || vm.State != StateStopped {
 			t.Errorf("Get() = %+v, want test-vm stopped", vm)
 		}
 	})
 
 	t.Run("when vm does not exist in list should return not found error", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		jsonOutput := `[{"name":"calf-dev","state":"running"}]`
 		mock.addOutput("list --format json", jsonOutput)
-
 		client := createTestClient(mock)
 
+		// Act
 		_, err := client.Get("nonexistent")
+
+		// Assert
 		if err == nil {
 			t.Error("Get() expected error for nonexistent VM, got nil")
 		}
-
 		if !strings.Contains(err.Error(), "not found") {
 			t.Errorf("Get() error should indicate not found, got: %v", err)
 		}
@@ -351,132 +373,141 @@ func TestGet(t *testing.T) {
 }
 
 func TestIsRunning(t *testing.T) {
-	tests := []struct {
-		name     string
-		vmName   string
-		listJSON string
-		want     bool
-	}{
-		{
-			name:     "when vm is running should return true",
-			vmName:   "test-vm",
-			listJSON: `[{"name":"test-vm","state":"running"}]`,
-			want:     true,
-		},
-		{
-			name:     "when vm is stopped should return false",
-			vmName:   "test-vm",
-			listJSON: `[{"name":"test-vm","state":"stopped"}]`,
-			want:     false,
-		},
-		{
-			name:     "when vm does not exist should return false",
-			vmName:   "test-vm",
-			listJSON: `[]`,
-			want:     false,
-		},
-	}
+	t.Run("when vm is running should return true", func(t *testing.T) {
+		// Arrange
+		mock := newMockCommandRunner()
+		mock.addOutput("list --format json", `[{"name":"test-vm","state":"running"}]`)
+		client := createTestClient(mock)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock := newMockCommandRunner()
-			mock.addOutput("list --format json", tt.listJSON)
+		// Act
+		got := client.IsRunning("test-vm")
 
-			client := createTestClient(mock)
+		// Assert
+		if !got {
+			t.Errorf("IsRunning() = false, want true")
+		}
+	})
 
-			got := client.IsRunning(tt.vmName)
-			if got != tt.want {
-				t.Errorf("IsRunning() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	t.Run("when vm is stopped should return false", func(t *testing.T) {
+		// Arrange
+		mock := newMockCommandRunner()
+		mock.addOutput("list --format json", `[{"name":"test-vm","state":"stopped"}]`)
+		client := createTestClient(mock)
+
+		// Act
+		got := client.IsRunning("test-vm")
+
+		// Assert
+		if got {
+			t.Errorf("IsRunning() = true, want false")
+		}
+	})
+
+	t.Run("when vm does not exist should return false", func(t *testing.T) {
+		// Arrange
+		mock := newMockCommandRunner()
+		mock.addOutput("list --format json", `[]`)
+		client := createTestClient(mock)
+
+		// Act
+		got := client.IsRunning("test-vm")
+
+		// Assert
+		if got {
+			t.Errorf("IsRunning() = true, want false")
+		}
+	})
 }
 
 func TestExists(t *testing.T) {
-	tests := []struct {
-		name     string
-		vmName   string
-		listJSON string
-		want     bool
-	}{
-		{
-			name:     "when vm exists in list should return true",
-			vmName:   "test-vm",
-			listJSON: `[{"name":"test-vm","state":"running"}]`,
-			want:     true,
-		},
-		{
-			name:     "when vm does not exist in list should return false",
-			vmName:   "test-vm",
-			listJSON: `[]`,
-			want:     false,
-		},
-	}
+	t.Run("when vm exists in list should return true", func(t *testing.T) {
+		// Arrange
+		mock := newMockCommandRunner()
+		mock.addOutput("list --format json", `[{"name":"test-vm","state":"running"}]`)
+		client := createTestClient(mock)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock := newMockCommandRunner()
-			mock.addOutput("list --format json", tt.listJSON)
+		// Act
+		got := client.Exists("test-vm")
 
-			client := createTestClient(mock)
+		// Assert
+		if !got {
+			t.Errorf("Exists() = false, want true")
+		}
+	})
 
-			got := client.Exists(tt.vmName)
-			if got != tt.want {
-				t.Errorf("Exists() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	t.Run("when vm does not exist in list should return false", func(t *testing.T) {
+		// Arrange
+		mock := newMockCommandRunner()
+		mock.addOutput("list --format json", `[]`)
+		client := createTestClient(mock)
+
+		// Act
+		got := client.Exists("test-vm")
+
+		// Assert
+		if got {
+			t.Errorf("Exists() = true, want false")
+		}
+	})
 }
 
 func TestGetState(t *testing.T) {
-	tests := []struct {
-		name     string
-		vmName   string
-		listJSON string
-		want     VMState
-	}{
-		{
-			name:     "when vm is running should return running state",
-			vmName:   "test-vm",
-			listJSON: `[{"name":"test-vm","state":"running"}]`,
-			want:     StateRunning,
-		},
-		{
-			name:     "when vm is stopped should return stopped state",
-			vmName:   "test-vm",
-			listJSON: `[{"name":"test-vm","state":"stopped"}]`,
-			want:     StateStopped,
-		},
-		{
-			name:     "when vm does not exist should return not found state",
-			vmName:   "test-vm",
-			listJSON: `[]`,
-			want:     StateNotFound,
-		},
-	}
+	t.Run("when vm is running should return running state", func(t *testing.T) {
+		// Arrange
+		mock := newMockCommandRunner()
+		mock.addOutput("list --format json", `[{"name":"test-vm","state":"running"}]`)
+		client := createTestClient(mock)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock := newMockCommandRunner()
-			mock.addOutput("list --format json", tt.listJSON)
+		// Act
+		got := client.GetState("test-vm")
 
-			client := createTestClient(mock)
+		// Assert
+		if got != StateRunning {
+			t.Errorf("GetState() = %v, want StateRunning", got)
+		}
+	})
 
-			got := client.GetState(tt.vmName)
-			if got != tt.want {
-				t.Errorf("GetState() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	t.Run("when vm is stopped should return stopped state", func(t *testing.T) {
+		// Arrange
+		mock := newMockCommandRunner()
+		mock.addOutput("list --format json", `[{"name":"test-vm","state":"stopped"}]`)
+		client := createTestClient(mock)
+
+		// Act
+		got := client.GetState("test-vm")
+
+		// Assert
+		if got != StateStopped {
+			t.Errorf("GetState() = %v, want StateStopped", got)
+		}
+	})
+
+	t.Run("when vm does not exist should return not found state", func(t *testing.T) {
+		// Arrange
+		mock := newMockCommandRunner()
+		mock.addOutput("list --format json", `[]`)
+		client := createTestClient(mock)
+
+		// Act
+		got := client.GetState("test-vm")
+
+		// Assert
+		if got != StateNotFound {
+			t.Errorf("GetState() = %v, want StateNotFound", got)
+		}
+	})
 }
 
 func TestRun(t *testing.T) {
 	t.Run("when called with headless true should pass --headless flag to tart run", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Run("test-vm", true, false, nil)
 
+		// Assert
 		if err != nil {
 			t.Errorf("Run() unexpected error = %v", err)
 		}
@@ -489,11 +520,14 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("when called with headless false should not pass --headless flag", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Run("test-vm", false, false, nil)
 
+		// Assert
 		if err != nil {
 			t.Errorf("Run() unexpected error = %v", err)
 		}
@@ -506,11 +540,14 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("when called with vnc true should pass --vnc-experimental flag", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Run("test-vm", false, true, nil)
 
+		// Assert
 		if err != nil {
 			t.Errorf("Run() unexpected error = %v", err)
 		}
@@ -523,11 +560,14 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("when called with vnc false should not pass --vnc-experimental flag", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Run("test-vm", false, false, nil)
 
+		// Assert
 		if err != nil {
 			t.Errorf("Run() unexpected error = %v", err)
 		}
@@ -540,11 +580,14 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("when called should pass vm name as argument", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		client := createTestClient(mock)
 
+		// Act
 		err := client.Run("my-vm", false, false, nil)
 
+		// Assert
 		if err != nil {
 			t.Errorf("Run() unexpected error = %v", err)
 		}
@@ -559,13 +602,15 @@ func TestRun(t *testing.T) {
 
 func TestRunWithCacheDirs(t *testing.T) {
 	t.Run("when called with cache dirs should include --dir flag for each directory", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		client := createTestClient(mock)
-
 		cacheDirs := []string{"calf-cache:/path/to/cache", "npm-cache:/path/to/npm"}
 
+		// Act
 		err := client.RunWithCacheDirs("test-vm", false, false, nil, cacheDirs)
 
+		// Assert
 		if err != nil {
 			t.Errorf("RunWithCacheDirs() unexpected error = %v", err)
 		}
@@ -581,11 +626,14 @@ func TestRunWithCacheDirs(t *testing.T) {
 	})
 
 	t.Run("when called should always include the cache sharing directory", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		client := createTestClient(mock)
 
+		// Act
 		err := client.RunWithCacheDirs("test-vm", false, false, nil, nil)
 
+		// Assert
 		if err != nil {
 			t.Errorf("RunWithCacheDirs() unexpected error = %v", err)
 		}
@@ -599,11 +647,14 @@ func TestRunWithCacheDirs(t *testing.T) {
 	})
 
 	t.Run("when called with empty cache dirs should still include cache sharing directory", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		client := createTestClient(mock)
 
+		// Act
 		err := client.RunWithCacheDirs("test-vm", false, false, nil, []string{})
 
+		// Assert
 		if err != nil {
 			t.Errorf("RunWithCacheDirs() unexpected error = %v", err)
 		}
@@ -617,11 +668,14 @@ func TestRunWithCacheDirs(t *testing.T) {
 	})
 
 	t.Run("when called should pass vm name as argument", func(t *testing.T) {
+		// Arrange
 		mock := newMockCommandRunner()
 		client := createTestClient(mock)
 
+		// Act
 		err := client.RunWithCacheDirs("my-vm", false, false, nil, nil)
 
+		// Assert
 		if err != nil {
 			t.Errorf("RunWithCacheDirs() unexpected error = %v", err)
 		}

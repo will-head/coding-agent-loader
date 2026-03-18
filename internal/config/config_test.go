@@ -10,15 +10,17 @@ import (
 func TestLoadConfig(t *testing.T) {
 	// Test loading config when file doesn't exist (should use defaults)
 	t.Run("when config file is missing should use default values", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
 
+		// Act
 		cfg, err := LoadConfig(configPath, "")
+
+		// Assert
 		if err != nil {
 			t.Fatalf("LoadConfig returned unexpected error: %v", err)
 		}
-
-		// Verify defaults are loaded
 		if cfg.Isolation.Defaults.VM.CPU != 4 {
 			t.Errorf("Expected CPU default 4, got %d", cfg.Isolation.Defaults.VM.CPU)
 		}
@@ -38,12 +40,15 @@ func TestLoadConfig(t *testing.T) {
 
 	// Test loading config when both paths are empty (should use defaults)
 	t.Run("when both paths are empty should use default values", func(t *testing.T) {
+		// Arrange — no setup needed
+
+		// Act
 		cfg, err := LoadConfig("", "")
+
+		// Assert
 		if err != nil {
 			t.Fatalf("LoadConfig with empty paths returned unexpected error: %v", err)
 		}
-
-		// Verify defaults are loaded
 		if cfg.Isolation.Defaults.VM.CPU != 4 {
 			t.Errorf("Expected CPU default 4, got %d", cfg.Isolation.Defaults.VM.CPU)
 		}
@@ -54,9 +59,9 @@ func TestLoadConfig(t *testing.T) {
 
 	// Test loading valid config file
 	t.Run("when valid config file exists should load all fields correctly", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
-
 		configContent := `
 version: 1
 isolation:
@@ -77,12 +82,13 @@ isolation:
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
+		// Act
 		cfg, err := LoadConfig(configPath, "")
+
+		// Assert
 		if err != nil {
 			t.Fatalf("LoadConfig returned unexpected error: %v", err)
 		}
-
-		// Verify loaded values
 		if cfg.Isolation.Defaults.VM.CPU != 8 {
 			t.Errorf("Expected CPU 8, got %d", cfg.Isolation.Defaults.VM.CPU)
 		}
@@ -108,9 +114,9 @@ isolation:
 
 	// Test partial config file (some fields missing)
 	t.Run("when config file has only some fields should use defaults for missing fields", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
-
 		configContent := `
 version: 1
 isolation:
@@ -123,12 +129,13 @@ isolation:
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
+		// Act
 		cfg, err := LoadConfig(configPath, "")
+
+		// Assert
 		if err != nil {
 			t.Fatalf("LoadConfig returned unexpected error: %v", err)
 		}
-
-		// Verify loaded values
 		if cfg.Isolation.Defaults.VM.CPU != 8 {
 			t.Errorf("Expected CPU 8, got %d", cfg.Isolation.Defaults.VM.CPU)
 		}
@@ -146,9 +153,9 @@ isolation:
 
 	// Test malformed YAML file (should return error)
 	t.Run("when config file contains malformed YAML should return parse error", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
-
 		malformedContent := `
 version: 1
 isolation:
@@ -160,7 +167,10 @@ isolation:
 			t.Fatalf("Failed to write malformed config: %v", err)
 		}
 
+		// Act
 		_, err := LoadConfig(configPath, "")
+
+		// Assert
 		if err == nil {
 			t.Error("Expected error for malformed YAML, got nil")
 		}
@@ -173,12 +183,11 @@ isolation:
 func TestLoadVMConfig(t *testing.T) {
 	// Test loading per-VM config
 	t.Run("when vm config file exists should override global config fields", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		globalConfigPath := filepath.Join(tmpDir, "config.yaml")
 		vmDir := filepath.Join(tmpDir, "vms", "test-vm")
 		vmConfigPath := filepath.Join(vmDir, "vm.yaml")
-
-		// Create global config
 		globalConfigContent := `
 version: 1
 isolation:
@@ -191,12 +200,9 @@ isolation:
 		if err := os.WriteFile(globalConfigPath, []byte(globalConfigContent), 0644); err != nil {
 			t.Fatalf("Failed to write global config: %v", err)
 		}
-
-		// Create VM config
 		if err := os.MkdirAll(vmDir, 0755); err != nil {
 			t.Fatalf("Failed to create VM directory: %v", err)
 		}
-
 		vmConfigContent := `
 cpu: 8
 memory: 16384
@@ -205,12 +211,13 @@ memory: 16384
 			t.Fatalf("Failed to write VM config: %v", err)
 		}
 
+		// Act
 		cfg, err := LoadConfig(globalConfigPath, vmConfigPath)
+
+		// Assert
 		if err != nil {
 			t.Fatalf("LoadConfig returned unexpected error: %v", err)
 		}
-
-		// Verify VM config overrides global
 		if cfg.Isolation.Defaults.VM.CPU != 8 {
 			t.Errorf("Expected CPU 8 from VM config, got %d", cfg.Isolation.Defaults.VM.CPU)
 		}
@@ -225,9 +232,9 @@ memory: 16384
 
 	// Test missing per-VM config (should use global/defaults)
 	t.Run("when vm config file is missing should use global config values", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		globalConfigPath := filepath.Join(tmpDir, "config.yaml")
-
 		globalConfigContent := `
 version: 1
 isolation:
@@ -240,12 +247,13 @@ isolation:
 			t.Fatalf("Failed to write global config: %v", err)
 		}
 
+		// Act
 		cfg, err := LoadConfig(globalConfigPath, "")
+
+		// Assert
 		if err != nil {
 			t.Fatalf("LoadConfig returned unexpected error: %v", err)
 		}
-
-		// Verify global values are used
 		if cfg.Isolation.Defaults.VM.CPU != 8 {
 			t.Errorf("Expected CPU 8, got %d", cfg.Isolation.Defaults.VM.CPU)
 		}
@@ -255,9 +263,9 @@ isolation:
 	})
 
 	t.Run("when config file has zero values should fail validation", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
-
 		configContent := `
 version: 1
 isolation:
@@ -271,7 +279,10 @@ isolation:
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
+		// Act
 		_, err := LoadConfig(configPath, "")
+
+		// Assert
 		if err == nil {
 			t.Error("Expected validation error for zero values in config, got nil")
 		}
@@ -282,9 +293,9 @@ isolation:
 	})
 
 	t.Run("when config file has empty string fields should fail validation", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
-
 		configContent := `
 version: 1
 isolation:
@@ -296,7 +307,10 @@ isolation:
 			t.Fatalf("Failed to write config file: %v", err)
 		}
 
+		// Act
 		_, err := LoadConfig(configPath, "")
+
+		// Assert
 		if err == nil {
 			t.Error("Expected validation error for empty base image in config, got nil")
 		}
@@ -309,6 +323,7 @@ isolation:
 
 func TestValidateConfig(t *testing.T) {
 	t.Run("when all fields are valid should pass validation", func(t *testing.T) {
+		// Arrange
 		cfg := &Config{
 			Version: 1,
 			Isolation: IsolationConfig{
@@ -326,12 +341,17 @@ func TestValidateConfig(t *testing.T) {
 			},
 		}
 
-		if err := cfg.Validate(""); err != nil {
+		// Act
+		err := cfg.Validate("")
+
+		// Assert
+		if err != nil {
 			t.Errorf("Validate returned unexpected error: %v", err)
 		}
 	})
 
 	t.Run("when cpu is zero should fail validation", func(t *testing.T) {
+		// Arrange
 		cfg := &Config{
 			Version: 1,
 			Isolation: IsolationConfig{
@@ -343,7 +363,10 @@ func TestValidateConfig(t *testing.T) {
 			},
 		}
 
+		// Act
 		err := cfg.Validate("")
+
+		// Assert
 		if err == nil {
 			t.Error("Expected validation error for invalid CPU, got nil")
 		}
@@ -354,6 +377,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("when memory is below minimum should fail validation", func(t *testing.T) {
+		// Arrange
 		cfg := &Config{
 			Version: 1,
 			Isolation: IsolationConfig{
@@ -366,7 +390,10 @@ func TestValidateConfig(t *testing.T) {
 			},
 		}
 
+		// Act
 		err := cfg.Validate("")
+
+		// Assert
 		if err == nil {
 			t.Error("Expected validation error for invalid memory, got nil")
 		}
@@ -377,6 +404,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("when memory is at minimum threshold should pass validation", func(t *testing.T) {
+		// Arrange
 		cfg := &Config{
 			Version: 1,
 			Isolation: IsolationConfig{
@@ -394,12 +422,17 @@ func TestValidateConfig(t *testing.T) {
 			},
 		}
 
-		if err := cfg.Validate(""); err != nil {
+		// Act
+		err := cfg.Validate("")
+
+		// Assert
+		if err != nil {
 			t.Errorf("Validate returned unexpected error for minimum valid memory: %v", err)
 		}
 	})
 
 	t.Run("when disk size is zero should fail validation", func(t *testing.T) {
+		// Arrange
 		cfg := &Config{
 			Version: 1,
 			Isolation: IsolationConfig{
@@ -413,7 +446,10 @@ func TestValidateConfig(t *testing.T) {
 			},
 		}
 
+		// Act
 		err := cfg.Validate("")
+
+		// Assert
 		if err == nil {
 			t.Error("Expected validation error for invalid disk size, got nil")
 		}
@@ -424,6 +460,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("when proxy mode is unrecognised should fail validation", func(t *testing.T) {
+		// Arrange
 		cfg := &Config{
 			Version: 1,
 			Isolation: IsolationConfig{
@@ -441,7 +478,10 @@ func TestValidateConfig(t *testing.T) {
 			},
 		}
 
+		// Act
 		err := cfg.Validate("")
+
+		// Assert
 		if err == nil {
 			t.Error("Expected validation error for invalid proxy mode, got nil")
 		}
@@ -452,6 +492,7 @@ func TestValidateConfig(t *testing.T) {
 	})
 
 	t.Run("when base image is empty should fail validation", func(t *testing.T) {
+		// Arrange
 		cfg := &Config{
 			Version: 1,
 			Isolation: IsolationConfig{
@@ -466,7 +507,10 @@ func TestValidateConfig(t *testing.T) {
 			},
 		}
 
+		// Act
 		err := cfg.Validate("")
+
+		// Assert
 		if err == nil {
 			t.Error("Expected validation error for empty base image, got nil")
 		}
@@ -479,22 +523,30 @@ func TestValidateConfig(t *testing.T) {
 
 func TestGetDefaultConfigPath(t *testing.T) {
 	t.Run("when home dir is available should return path ending in .calf/config.yaml", func(t *testing.T) {
+		// Arrange — no setup needed
+
+		// Act
 		path, err := GetDefaultConfigPath()
+
+		// Assert
 		if err != nil {
 			t.Fatalf("GetDefaultConfigPath returned unexpected error: %v", err)
 		}
-
 		if !strings.HasSuffix(path, filepath.Join(".calf", "config.yaml")) {
 			t.Errorf("Expected path ending in .calf/config.yaml, got %s", path)
 		}
 	})
 
 	t.Run("when home dir is available should return an absolute path", func(t *testing.T) {
+		// Arrange — no setup needed
+
+		// Act
 		path, err := GetDefaultConfigPath()
+
+		// Assert
 		if err != nil {
 			t.Fatalf("GetDefaultConfigPath returned unexpected error: %v", err)
 		}
-
 		if !filepath.IsAbs(path) {
 			t.Errorf("Expected absolute path, got %s", path)
 		}
@@ -503,35 +555,46 @@ func TestGetDefaultConfigPath(t *testing.T) {
 
 func TestGetVMConfigPath(t *testing.T) {
 	t.Run("when vm name is provided should return path containing the vm name", func(t *testing.T) {
+		// Arrange
 		vmName := "calf-dev"
 
+		// Act
 		path, err := GetVMConfigPath(vmName)
+
+		// Assert
 		if err != nil {
 			t.Fatalf("GetVMConfigPath returned unexpected error: %v", err)
 		}
-
 		if !strings.Contains(path, vmName) {
 			t.Errorf("Expected path to contain vm name %q, got %s", vmName, path)
 		}
 	})
 
 	t.Run("when vm name is provided should return path ending in vm.yaml", func(t *testing.T) {
+		// Arrange — no setup needed
+
+		// Act
 		path, err := GetVMConfigPath("calf-dev")
+
+		// Assert
 		if err != nil {
 			t.Fatalf("GetVMConfigPath returned unexpected error: %v", err)
 		}
-
 		if !strings.HasSuffix(path, "vm.yaml") {
 			t.Errorf("Expected path ending in vm.yaml, got %s", path)
 		}
 	})
 
 	t.Run("when vm name is provided should return an absolute path", func(t *testing.T) {
+		// Arrange — no setup needed
+
+		// Act
 		path, err := GetVMConfigPath("calf-dev")
+
+		// Assert
 		if err != nil {
 			t.Fatalf("GetVMConfigPath returned unexpected error: %v", err)
 		}
-
 		if !filepath.IsAbs(path) {
 			t.Errorf("Expected absolute path, got %s", path)
 		}
@@ -540,9 +603,9 @@ func TestGetVMConfigPath(t *testing.T) {
 
 func TestConfigPathValidation(t *testing.T) {
 	t.Run("when global config has validation error should include file path in error message", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, "config.yaml")
-
 		cfg := &Config{
 			Version: 1,
 			Isolation: IsolationConfig{
@@ -554,7 +617,10 @@ func TestConfigPathValidation(t *testing.T) {
 			},
 		}
 
+		// Act
 		err := cfg.Validate(configPath)
+
+		// Assert
 		if err == nil {
 			t.Error("Expected validation error, got nil")
 		}
@@ -564,9 +630,9 @@ func TestConfigPathValidation(t *testing.T) {
 	})
 
 	t.Run("when vm config has validation error should include file path in error message", func(t *testing.T) {
+		// Arrange
 		tmpDir := t.TempDir()
 		vmConfigPath := filepath.Join(tmpDir, "vm.yaml")
-
 		cfg := &Config{
 			Version: 1,
 			Isolation: IsolationConfig{
@@ -578,7 +644,10 @@ func TestConfigPathValidation(t *testing.T) {
 			},
 		}
 
+		// Act
 		err := cfg.Validate(vmConfigPath)
+
+		// Assert
 		if err == nil {
 			t.Error("Expected validation error, got nil")
 		}
