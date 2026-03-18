@@ -33,10 +33,13 @@ For all test functions using function-scope `os.MkdirTemp` + shared `cm` (`TestH
 
 Replaced the 9-case `for _, tt := range tests` loop in `TestFormatBytes` with individual `t.Run` blocks, each with `// Arrange — no setup needed` / `// Act` / `// Assert` sections. Test count unchanged.
 
+## Item 9 — Rewrite Table-Driven Inner Loop in `TestClearCacheByType` (completed 2026-03-18)
+
+Replaced the outer `t.Run("when cache type is valid should clear that cache type", ...)` wrapper and its inner `for _, cacheType := range testCases` loop (4 iterations: homebrew, npm, go, git) with 4 individual `t.Run("when cache type is X should clear that cache type", ...)` blocks, each with `// Arrange`, `// Act`, `// Assert` sections and per-subtest `t.TempDir()` + `NewCacheManagerWithDirs`. Net test count: 207 (outer wrapper removed, -1 from 208 as expected).
+
 ---
 
 ## Final Verification
 
-- `go test ./...` — 208 passed ✓
-- `go test -count=2 ./internal/isolation/...` — 300 passed ✓
+- `go test ./...` — 207 passed ✓
 - `staticcheck ./...` — clean ✓

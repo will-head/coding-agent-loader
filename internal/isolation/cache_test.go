@@ -146,7 +146,6 @@ func TestCacheStatus(t *testing.T) {
 	})
 }
 
-
 func TestNewCacheManagerWithDirs(t *testing.T) {
 	t.Run("when dirs provided should create homebrew cache under cache base dir", func(t *testing.T) {
 		// Arrange
@@ -1328,39 +1327,83 @@ func TestClearCache(t *testing.T) {
 		}
 	})
 
-	t.Run("when cache type is valid should clear that cache type", func(t *testing.T) {
-		testCases := []string{"homebrew", "npm", "go", "git"}
+	t.Run("when cache type is homebrew should clear that cache type", func(t *testing.T) {
+		// Arrange
+		homeDir := t.TempDir()
+		cm := NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, "cache"))
+		if err := cm.SetupHomebrewCache(); err != nil {
+			t.Fatalf("SetupHomebrewCache failed: %v", err)
+		}
 
-		for _, cacheType := range testCases {
-			t.Run(cacheType, func(t *testing.T) {
-				// Arrange
-				homeDir := t.TempDir()
-				cm := NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, "cache"))
-				setupFuncs := map[string]func() error{
-					"homebrew": cm.SetupHomebrewCache,
-					"npm":      cm.SetupNpmCache,
-					"go":       cm.SetupGoCache,
-					"git":      cm.SetupGitCache,
-				}
-				setup, ok := setupFuncs[cacheType]
-				if !ok {
-					t.Fatalf("no setup func registered for cache type %s", cacheType)
-				}
-				if err := setup(); err != nil {
-					t.Fatalf("Setup for %s failed: %v", cacheType, err)
-				}
+		// Act
+		cleared, err := cm.Clear("homebrew", false)
 
-				// Act
-				cleared, err := cm.Clear(cacheType, false)
+		// Assert
+		if err != nil {
+			t.Fatalf("Clear failed: %v", err)
+		}
+		if !cleared {
+			t.Fatalf("expected cleared=true")
+		}
+	})
 
-				// Assert
-				if err != nil {
-					t.Fatalf("Clear failed for %s: %v", cacheType, err)
-				}
-				if !cleared {
-					t.Fatalf("expected cleared=true for %s", cacheType)
-				}
-			})
+	t.Run("when cache type is npm should clear that cache type", func(t *testing.T) {
+		// Arrange
+		homeDir := t.TempDir()
+		cm := NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, "cache"))
+		if err := cm.SetupNpmCache(); err != nil {
+			t.Fatalf("SetupNpmCache failed: %v", err)
+		}
+
+		// Act
+		cleared, err := cm.Clear("npm", false)
+
+		// Assert
+		if err != nil {
+			t.Fatalf("Clear failed: %v", err)
+		}
+		if !cleared {
+			t.Fatalf("expected cleared=true")
+		}
+	})
+
+	t.Run("when cache type is go should clear that cache type", func(t *testing.T) {
+		// Arrange
+		homeDir := t.TempDir()
+		cm := NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, "cache"))
+		if err := cm.SetupGoCache(); err != nil {
+			t.Fatalf("SetupGoCache failed: %v", err)
+		}
+
+		// Act
+		cleared, err := cm.Clear("go", false)
+
+		// Assert
+		if err != nil {
+			t.Fatalf("Clear failed: %v", err)
+		}
+		if !cleared {
+			t.Fatalf("expected cleared=true")
+		}
+	})
+
+	t.Run("when cache type is git should clear that cache type", func(t *testing.T) {
+		// Arrange
+		homeDir := t.TempDir()
+		cm := NewCacheManagerWithDirs(homeDir, filepath.Join(homeDir, "cache"))
+		if err := cm.SetupGitCache(); err != nil {
+			t.Fatalf("SetupGitCache failed: %v", err)
+		}
+
+		// Act
+		cleared, err := cm.Clear("git", false)
+
+		// Assert
+		if err != nil {
+			t.Fatalf("Clear failed: %v", err)
+		}
+		if !cleared {
+			t.Fatalf("expected cleared=true")
 		}
 	})
 
