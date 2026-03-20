@@ -74,7 +74,7 @@ git push
 
 1. **Read original requirements** — find and read the full TODO from the phase TODO file referenced in STATUS.md. Understand what was asked for, acceptance criteria, and constraints. This anchors the review against intent, not just code quality.
 
-2. **Read coding standards** — read `CODING_STANDARDS.md` to review quality standards and patterns to check for.
+2. **Load coding standards** — invoke the `coding-standards` skill to load relevant files from `CODING-STANDARDS/` as the review baseline.
 
 ### Step 4: Review Code
 
@@ -170,7 +170,7 @@ On main, update STATUS.md:
 
 Commit and push on main.
 
-**Add new patterns to CODING_STANDARDS.md** if this review surfaced a recurring or new-category issue not yet documented there. Commit on main.
+**Record new patterns** if this review surfaced recurring issues — write them to `CODING-STANDARDS/CODING-STANDARDS-[LANG]-PATTERNS.md`. If any pattern reaches count ≥ 3, invoke the `coding-standards` skill to promote it. Commit on main.
 
 ### Step 8: Check Queue for More
 
@@ -191,7 +191,7 @@ Read STATUS.md "Needs Review" again. If unclaimed items exist, loop back to Step
 - [ ] Build succeeds after fixes (`go build -o calf ./cmd/calf`)
 - [ ] staticcheck passes after fixes (`staticcheck ./...`)
 - [ ] Fixes committed and pushed to worktree branch
-- [ ] Recurring patterns added to CODING_STANDARDS.md if applicable
+- [ ] Recurring patterns recorded to CODING-STANDARDS-[LANG]-PATTERNS.md; promotion candidates flagged
 - [ ] STATUS.md updated (Needs Testing or Needs Rework) on main
 - [ ] STATUS.md changes committed and pushed
 

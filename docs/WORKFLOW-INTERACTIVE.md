@@ -50,8 +50,8 @@ For changes **only** to `.md` files or code comments:
 
 ### Step 1: Implement
 
-- **Read `CODING_STANDARDS.md`** before writing any code
-- **Invoke the `coops-tdd` skill first** — this is mandatory before writing any code, no exceptions
+- **Invoke the `coding-standards` skill first** — loads relevant standards from `CODING-STANDARDS/` as mandatory constraints
+- **Invoke the `coops-tdd` skill** — this is mandatory before writing any code, no exceptions
 - The skill structures implementation via TDD: write failing test → implement minimum code → refactor
 - Follow Go conventions and shell script best practices
 - Make minimum changes needed to accomplish the goal
@@ -77,7 +77,7 @@ Build must succeed to continue.
 
 ### Step 4: Code Review
 
-- **Invoke the `code-review` skill** — reviews changed code for quality, reuse, and efficiency against CODING_STANDARDS.md
+- **Invoke the `code-review` skill** — reviews changed code for quality, reuse, and efficiency against `CODING-STANDARDS/`, records patterns found
 
 ### Step 5: Present Review
 

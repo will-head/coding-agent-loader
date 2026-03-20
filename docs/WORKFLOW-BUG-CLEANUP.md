@@ -84,8 +84,8 @@ For bug fixes that only affect `.md` files or code comments:
 ### Step 2: Implement
 
 - Only proceed after approach is approved in Step 1
-- **Read `CODING_STANDARDS.md`** before writing any code
-- **Invoke the `coops-tdd` skill first** — this is mandatory before writing any code, no exceptions
+- **Invoke the `coding-standards` skill first** — loads relevant standards from `CODING-STANDARDS/` as mandatory constraints
+- **Invoke the `coops-tdd` skill** — this is mandatory before writing any code, no exceptions
 - The skill structures implementation via TDD: write failing test that reproduces the bug → implement fix → verify test passes
 - Follow Go conventions and shell script best practices
 - Make minimum changes needed to fix the bug

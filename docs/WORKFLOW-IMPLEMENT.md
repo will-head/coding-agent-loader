@@ -70,7 +70,7 @@ Two sub-steps:
 
 1. **Read requirements** — for Refined items: read the full TODO from the phase TODO file. For Rework items: read the Needs Rework feedback from STATUS.md plus the original TODO. Note acceptance criteria and constraints.
 
-2. **Read coding standards** — read `CODING_STANDARDS.md` before implementing.
+2. **Load coding standards** — invoke the `coding-standards` skill to load relevant files from `CODING-STANDARDS/` before implementing.
 
 ### Step 4: Enter or Resume Worktree
 

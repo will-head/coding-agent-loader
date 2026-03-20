@@ -1,12 +1,12 @@
 ---
 name: code-review
-description: Review current code changes for quality, reuse, and efficiency against CODING_STANDARDS.md, then update CODING_STANDARDS.md with any new patterns found. Use at code review checkpoints in the Interactive workflow (steps 4 and 7) and Bug Cleanup workflow (steps 5 and 8). Invoke whenever a workflow step requires a structured code review before committing.
+description: Review current code changes for quality, reuse, and efficiency against CODING-STANDARDS/, then record any new patterns found to CODING-STANDARDS-[LANG]-PATTERNS.md. Use at code review checkpoints in the Interactive workflow (steps 4 and 7) and Bug Cleanup workflow (steps 5 and 8). Invoke whenever a workflow step requires a structured code review before committing.
 context: fork
 ---
 
 # Code Review
 
-Review current code changes for quality, reuse, and efficiency. Always verify against `CODING_STANDARDS.md`. Document findings with file and line references, severity ratings (critical / major / minor), and specific recommendations.
+Review current code changes for quality, reuse, and efficiency. Always load relevant files from `CODING-STANDARDS/` before reviewing. Document findings with file and line references, severity ratings (critical / major / minor), and specific recommendations.
 
 ## Change Scope
 
@@ -16,15 +16,19 @@ Identify current changes — `git diff` shows unstaged, `git diff --cached` show
 git diff && git diff --cached
 ```
 
-## Step 1: Run simplify
+## Step 1: Load Standards
+
+Invoke the `coding-standards` skill to load the relevant standards for the language(s) being reviewed. This loads `CODING-STANDARDS/CODING-STANDARDS.md` (shared) and any language-specific file (e.g. `CODING-STANDARDS-GO.md`).
+
+## Step 2: Run simplify
 
 Invoke the `simplify` skill.
 
-If `simplify` is unavailable, skip to Step 2 and apply the CODING_STANDARDS.md checklist manually.
+If `simplify` is unavailable, skip to Step 3 and apply the checklist manually.
 
-## Step 2: Apply CODING_STANDARDS.md Checklist
+## Step 3: Apply Checklist
 
-Read `CODING_STANDARDS.md` and verify every item in the Code Review Checklist section against the current changes. Also check:
+Using the loaded standards, verify every item in the Code Review Checklist against the current changes. Also check:
 
 - **Code quality** — Readability, maintainability, modularity
 - **Test coverage** — All scenarios tested (valid inputs, invalid inputs, errors, edge cases)
@@ -33,18 +37,18 @@ Read `CODING_STANDARDS.md` and verify every item in the Code Review Checklist se
 - **Go conventions** — Idiomatic Go, stdlib over custom implementations, GoDoc on all exported identifiers; run `staticcheck ./...` and `go test ./...`
 - **Shell script best practices** — Proper quoting, dependency checks, no `eval`, errors never suppressed
 
-## Step 3: Check for New Patterns
+## Step 4: Record Patterns
 
-After completing the review, consider whether any issues found represent a recurring pattern not yet captured in `CODING_STANDARDS.md`. If so:
+After completing the review, for each issue found:
 
-1. Add a new section to `CODING_STANDARDS.md` following the existing format:
-   - Problem description
-   - Standards (bulleted Must/Never/Should rules)
-   - Code examples (Bad / Good / Better where applicable)
-2. Add the pattern to the Code Review Checklist in `CODING_STANDARDS.md`
-3. Note any additions in the review findings presented to the user
+1. Identify the language (`GO`, `SH`, etc.)
+2. Open `CODING-STANDARDS/CODING-STANDARDS-[LANG]-PATTERNS.md` (create it if it doesn't exist)
+3. Check whether a semantically similar pattern already exists — "avoid eval" and "don't use eval in scripts" are the same pattern; "avoid eval" and "sanitise before eval" are not
+   - If match found: increment its count and add a new example with today's date and file:line
+   - If no match: add a new entry (count starts at 1)
+4. If any pattern's count has reached 3, flag it in the report — the `coding-standards` skill should be invoked to promote it
 
-## Step 4: Present Findings
+## Step 5: Present Findings
 
 Present a structured report:
 
@@ -56,8 +60,10 @@ Present a structured report:
 
 _If no issues: "No issues found."_
 
-### CODING_STANDARDS.md Updates
-- [Added/None] — [pattern name if added]
+### Patterns Recorded
+- [LANG] [pattern-slug] — count now N[, PROMOTION CANDIDATE if count ≥ 3]
+
+_If none: "No new patterns recorded."_
 
 ### Summary
 [Overall assessment and readiness for next step]

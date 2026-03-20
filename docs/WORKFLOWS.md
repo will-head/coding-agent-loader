@@ -405,4 +405,4 @@ This policy applies to Interactive and Bug Cleanup workflows. Autonomous workflo
 **Project Management:**
 - [PLAN.md](../PLAN.md) - TODOs and implementation tasks (source of truth)
 - [STATUS.md](../STATUS.md) - Project status tracking (pipeline queue)
-- [CODING_STANDARDS.md](../CODING_STANDARDS.md) - Code quality standards
+- [CODING-STANDARDS/](../CODING-STANDARDS/CODING-STANDARDS.md) - Code quality standards (shared + language-specific)

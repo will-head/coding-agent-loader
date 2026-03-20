@@ -139,7 +139,7 @@ The skill structures all implementation via test-first development: write a fail
 
 **Must test all scenarios:** valid inputs, invalid inputs, missing dependencies, auth failures, existing state, network failures.
 
-See [CODING_STANDARDS.md](CODING_STANDARDS.md) for complete requirements and patterns.
+See [`CODING-STANDARDS/`](CODING-STANDARDS/CODING-STANDARDS.md) for complete requirements and patterns (shared + language-specific files).
 
 ---
 
@@ -184,12 +184,12 @@ Skip the menu and launch that workflow directly (same as selecting it from the `
 
    | Always read | Workflows 1, 3, 5, 6 only |
    |-------------|-------------------------------|
-   | `docs/WORKFLOWS.md` | `CODING_STANDARDS.md` |
+   | `docs/WORKFLOWS.md` | `CODING-STANDARDS/CODING-STANDARDS.md` + relevant language file |
    | `PLAN.md` | |
    | Active phase TODO file | |
    | `STATUS.md` (for workflows 4-8) | |
 
-   Skip `CODING_STANDARDS.md` for workflows 2 (Documentation), 4 (Refine), 7 (Test), 8 (Integrate) — they don't produce code.
+   Skip `CODING-STANDARDS/` for workflows 2 (Documentation), 4 (Refine), 7 (Test), 8 (Integrate) — they don't produce code. Use the `coding-standards` skill to load the right files.
 
 5. **Check environment** - Run `echo $CALF_VM` (must happen before any approval-gated step):
    - `CALF_VM=true`: Display "Running in calf-dev VM (isolated environment)" — approvals auto-granted
@@ -227,6 +227,6 @@ This enables the next session to skip redundant file reads when the phase hasn't
 
 **Operational:** [ADR-002](docs/adr/ADR-002-tart-vm-operational-guide.md) | [ADR-003](docs/adr/ADR-003-package-download-caching.md) | [bootstrap.md](docs/bootstrap.md)
 
-**Reference:** [WORKFLOWS.md](docs/WORKFLOWS.md) (index + shared conventions) | [WORKFLOW-*.md](docs/) | [architecture.md](docs/architecture.md) | [cli.md](docs/cli.md) | [SPEC.md](docs/SPEC.md) | [CODING_STANDARDS.md](CODING_STANDARDS.md)
+**Reference:** [WORKFLOWS.md](docs/WORKFLOWS.md) (index + shared conventions) | [WORKFLOW-*.md](docs/) | [architecture.md](docs/architecture.md) | [cli.md](docs/cli.md) | [SPEC.md](docs/SPEC.md) | [CODING-STANDARDS/](CODING-STANDARDS/CODING-STANDARDS.md)
 
 **Historical (immutable):** [ADR-001](docs/adr/ADR-001-cal-isolation.md) | [ADR-002](docs/adr/ADR-002-tart-vm-operational-guide.md) | [PRD-001](docs/prd/prd-001-tart-vm-gui-access.md)
