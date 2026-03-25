@@ -76,9 +76,7 @@
 7. ✅ Added mount mode to `--status` output
 8. ✅ Updated documentation (bootstrap.md)
 
-**Remaining Work:**
-- [ ] Add `--no-mount` support to Go implementation (`calf isolation init`)
-- [ ] Testing and validation in VM environment
+**Remaining Work:** Moved to 1.6 (CLI Commands) — see `--no-mount` implementation requirements there.
 
 **Impact:** Medium - enhances security options for sensitive workloads
 
@@ -227,7 +225,7 @@
 
 | Command | Maps from | Description |
 |---------|-----------|-------------|
-| `calf isolation init [--proxy auto\|on\|off] [--yes]` | `calf-bootstrap --init` | Full VM creation and setup |
+| `calf isolation init [--proxy auto\|on\|off] [--no-mount] [--yes]` | `calf-bootstrap --init` | Full VM creation and setup |
 | `calf isolation start [--headless]` | `calf-bootstrap --run` | Start VM and SSH in with tmux |
 | `calf isolation stop [--force]` | `calf-bootstrap --stop` | Stop calf-dev |
 | `calf isolation restart` | `calf-bootstrap --restart` | Restart VM and reconnect |
@@ -243,11 +241,23 @@
 
 4. Global flags: `--yes` / `-y` (skip confirmations), `--proxy auto|on|off`, `--clean` (force full script deployment)
 5. Isolation flags for `init` and `start`/`gui`:
+   - `--no-mount` — disable host filesystem mounts (`calf-cache`, `tart-cache`) for maximum isolation (`init` only — permanent, cannot be changed after creation)
    - `--no-network` — enable network isolation (softnet + host-side pf SMB block)
    - `--safe-mode` — enable both `--no-network` and `--no-mount`
    - `--no-smb-block` — disable SMB blocking (testing only)
    - `--clear-smb-block` — emergency: flush stuck pf rules
    - `--remove-smb-permissions` — remove `/etc/sudoers.d/calf-pfctl`
+
+**`--no-mount` implementation requirements (moved from item 5, calf-bootstrap reference implementation):**
+- Accept `--no-mount` flag on `calf isolation init` only (not `start`/`gui`)
+- During VM creation: omit `calf-cache` and `tart-cache` virtio-fs mounts from `tart run` arguments
+- Create VM-local `~/.calf-cache` directory inside VM instead
+- Write host marker file `~/.calf-vm-no-mount` (permanent — survives VM restarts)
+- Write `NO_MOUNT=true` to `~/.calf-vm-config` inside VM
+- Display permanent-setting warning before proceeding; require Y/n confirmation (suppressed by `--yes`)
+- Show mount mode in `calf isolation status` output
+- Acceptance criteria: VM started with `--no-mount` has no `/Volumes/calf-cache` or `/Volumes/tart-cache`; `~/.calf-vm-no-mount` exists on host; re-running `calf isolation start` respects the flag automatically
+- Testing: unit tests for flag wiring and tart command arguments; VM integration test verifying mount absence and marker file
 
 **Dependency — `calf isolation gui` requires `calf-netd` (Go Privileged Helper Daemon):**
 
