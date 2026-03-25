@@ -74,8 +74,7 @@ Done
 | **Needs Integration** | Test (7) | Integrate (8) |
 | **Integrating** | Integrate (8) — claim | Integrate (8) in progress |
 | **Needs Rework** | Review (6) or Test (7) | Implement (5) |
-| **Done** | Integrate (8) | — |
-| **Closed** | Any workflow | — |
+| **Done / Closed** | Integrate (8) or any workflow | Appended to [STATUS-MERGED.md](../STATUS-MERGED.md) |
 
 ### STATUS.md Entry Format
 
@@ -103,13 +102,9 @@ Done
 
 ## Needs Rework
 - <feature-name> | .claude/worktrees/<name> | <description> | <Review|Build|Test|User>: <feedback>
-
-## Done
-- <feature-name> | <description> | merged: YYYY-MM-DD
-
-## Closed
-- <feature-name> | <description> | closed: <reason>
 ```
+
+Merged and closed entries go to **STATUS-MERGED.md** (not STATUS.md). See [STATUS-MERGED.md](../STATUS-MERGED.md).
 
 ---
 

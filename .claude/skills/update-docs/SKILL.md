@@ -47,6 +47,7 @@ Skip this step if no TODO items were completed this session.
 
 4. Confirm the TODO file no longer contains those items.
 5. Phase is only complete when the TODO file is empty — check this before reporting phase status in Step 4.
+6. **Clear STATUS.md Refined entries:** If any completed TODOs were listed in the Refined section of `STATUS.md`, remove those rows now. This applies especially to the Interactive workflow, where items bypass the async pipeline and are never automatically removed from Refined.
 
 ## Step 3: Add New TODOs
 
@@ -63,7 +64,7 @@ If a TODO clearly belongs to a future phase rather than the current one, add it 
 
 ## Step 4: Update PLAN.md
 
-**CRITICAL: Switch to `main` branch before editing PLAN.md or STATUS.md.** If currently in a worktree, commit the feature branch first, then exit the worktree (`ExitWorktree`) and switch to main. STATUS.md updates are the responsibility of the calling workflow (e.g. Integrate) — do not update STATUS.md here unless the calling workflow explicitly instructs it.
+**CRITICAL: Switch to `main` branch before editing PLAN.md or STATUS.md.** If currently in a worktree, commit the feature branch first, then exit the worktree (`ExitWorktree`) and switch to main. Pipeline section moves (Needs Review, Needs Testing, Integrating, etc.) are the responsibility of the calling workflow — do not move items between pipeline sections here. The Refined cleanup in Step 2.6 is the only STATUS.md update this skill performs directly.
 
 Update `PLAN.md` to reflect current project status:
 - Phase progress (items remaining after TODO → DONE movement)

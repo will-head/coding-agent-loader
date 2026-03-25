@@ -151,7 +151,7 @@ Ask user approval (auto-approved when `CALF_VM=true` does NOT apply here — `gi
 git push origin --delete implement/<feature-name>
 ```
 
-**If user declines branch deletion:** Leave the remote branch. Note it in STATUS.md Done entry as "remote branch not deleted". Continue.
+**If user declines branch deletion:** Leave the remote branch. Note it in the STATUS-MERGED.md Merged entry as "remote branch not deleted". Continue.
 
 **Delete local branch reference:**
 
@@ -163,11 +163,12 @@ git branch -d implement/<feature-name>
 
 **Update STATUS.md on main:**
 - Remove item from "Integrating"
-- Add to "Done" with merge date
+
+**Append to STATUS-MERGED.md:**
+- Add a row to the Merged table with PR number, branch, description, and merge date
 
 ```
-## Done
-- <feature-name> | <description> | merged: YYYY-MM-DD
+| [#N](https://github.com/will-head/coding-agent-loader/pull/N) | implement/<feature-name> | <description> | YYYY-MM-DD |
 ```
 
 **Invoke the `update-docs` skill** to move completed TODOs to DONE, add any new TODOs, and update PLAN.md phase status.
@@ -175,7 +176,7 @@ git branch -d implement/<feature-name>
 **Commit all documentation changes:**
 
 ```bash
-git add STATUS.md PLAN.md docs/PLAN-PHASE-*.md
+git add STATUS.md STATUS-MERGED.md PLAN.md docs/PLAN-PHASE-*.md
 git commit -m "$(cat <<'EOF'
 Integrate <feature-name>: update documentation
 
@@ -204,7 +205,8 @@ git push
 - [ ] Local worktree removed (`git worktree remove`)
 - [ ] Remote branch deleted (with approval) or noted as skipped
 - [ ] Local branch reference deleted
-- [ ] STATUS.md updated (moved to Done)
+- [ ] STATUS.md updated (Integrating entry removed)
+- [ ] STATUS-MERGED.md updated (row appended to Merged table)
 - [ ] Completed TODO moved from phase TODO to phase DONE file
 - [ ] PLAN.md phase status updated if applicable
 - [ ] Documentation changes committed and pushed

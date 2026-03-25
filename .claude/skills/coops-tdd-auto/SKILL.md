@@ -19,6 +19,8 @@ TDD is mandatory. Do not write implementation code before writing a failing test
 
 Detect the project's test runner from config files (`package.json`, `pom.xml`, `Makefile`, etc.). If ambiguous, infer from the language and project structure. Verify by running the suite once and confirming it exits cleanly.
 
+If the `coding-standards` skill is available, invoke it to load standards for the language(s) being worked on. These will be applied during the Refactor phase. If unavailable, proceed without pre-loaded standards.
+
 ## Red → Green → Refactor
 
 ### Red — Write a Failing Test
@@ -63,7 +65,7 @@ With tests green, improve structure without changing behaviour:
 - Rename, extract, reorganise — do not change what the code does.
 - Run all tests after each change.
 - Do NOT modify or add tests during refactoring.
-- Apply coding standards (loaded at session start via `coding-standards`) during this phase — standards compliance belongs here, not in Green. Green stays minimal.
+- Apply coding standards during this phase — standards compliance belongs here, not in Green. Green stays minimal. If `coding-standards` was loaded at session start, treat those rules as mandatory constraints. If it was unavailable, apply general code quality principles (clarity, consistency, no duplication).
 
 Repeat the cycle for the next behaviour.
 
@@ -89,7 +91,7 @@ Each test should be the most obvious, smallest step toward the requirement. If y
 - Tests must be fast (seconds, not minutes) and binary (pass/fail, no interpretation needed).
 - Code coverage is a tool for guiding refactoring, not a target.
 
-## Test Doubles
+## Mock Rules
 
 - Do NOT mock internal collaborators to isolate classes.
 - Only use test doubles for slow I/O (network, database, filesystem, message queues).
@@ -100,7 +102,7 @@ Each test should be the most obvious, smallest step toward the requirement. If y
 - Refactoring = changing implementation without changing behaviour.
 - During refactoring, existing tests MUST NOT be modified or deleted.
 - New classes or methods extracted during refactoring do not get their own tests — they are covered via the public interface.
-- If tests break during refactoring, the tests were coupled to implementation details. Flag this to the user rather than fixing the tests.
+- Refactoring must never break tests — well-written tests verify behaviour, not implementation. If tests break during refactoring, they were coupled to implementation details. Revert the refactor, log the coupling issue in the task output, and continue to the next task item. Do not modify the tests.
 
 ## What Not To Do
 
